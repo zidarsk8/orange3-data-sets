@@ -24,9 +24,27 @@ class WorldBankDataWidget(OWWidget):
         button = QtGui.QPushButton("hello")
 
         countries = CountryListWidget()
+        indicators = IndicatorListWidget()
         layout.addWidget(button)
         layout.addWidget(countries)
+        layout.addWidget(indicators)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
+
+
+class IndicatorListWidget(QtGui.QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        layout = QtGui.QGridLayout()
+
+        filter_widget = SimpleFilterWidget()
+        country_list = IndicatorTableWidget()
+        layout.addWidget(filter_widget)
+        layout.addWidget(country_list)
+
+        self.setLayout(layout)
+        filter_widget.register_callback(country_list.filter_data)
 
 
 class CountryListWidget(QtGui.QWidget):
@@ -126,6 +144,56 @@ class CountryTableWidget(QtGui.QTableWidget):
             self.setItem(index, 1, QtGui.QTableWidgetItem(income_level))
             self.setItem(index, 2, QtGui.QTableWidgetItem(
                 countries[data]["name"]))
+
+
+class IndicatorTableWidget(QtGui.QTableWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.displayed_indicators = {}
+        self.fetch_country_data()
+        self.setColumnCount(4)
+        self.filter_data()
+
+    def fetch_country_data(self):
+        api = wbpy.IndicatorAPI()
+        indicators = api.get_indicators(common_only=True)
+        self.indicators = collections.OrderedDict(sorted(
+            indicators.items(),
+            key=lambda item: item[1]["name"]
+        ))
+
+    def filter_data(self, filter_str=""):
+        def check_item(item):
+            return (
+                filter_str.lower() in item[0].lower() or
+                filter_str.lower() in item[1]["name"].lower() or
+                filter_str.lower() in item[1]["incomeLevel"]["id"].lower() or
+                filter_str.lower() in item[1]["incomeLevel"]["value"].lower()
+            )
+        if filter_str:
+            filtered_list = collections.OrderedDict(
+                item for item in self.indicators.items() if check_item(item)
+            )
+        else:
+            filtered_list = self.indicators
+
+        self.draw_items(filtered_list)
+
+    def draw_items(self, indicators=None):
+        if indicators is None:
+            indicators = self.indicators
+        self.displayed_indicators = indicators
+        self.setRowCount(len(indicators))
+        for index, data in enumerate(indicators):
+            source = "{} ({})".format(
+                indicators[data]["source"]["value"],
+                indicators[data]["source"]["id"],
+            )
+            self.setItem(index, 0, QtGui.QTableWidgetItem(data))
+            self.setItem(index, 1, QtGui.QTableWidgetItem(
+                indicators[data]["name"]))
+            self.setItem(index, 2, QtGui.QTableWidgetItem(source))
 
 
 if __name__ == "__main__":
