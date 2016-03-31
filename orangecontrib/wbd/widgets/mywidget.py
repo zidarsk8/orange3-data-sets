@@ -1,4 +1,5 @@
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore
+from PyQt4 import QtGui
 from Orange.widgets.widget import OWWidget
 from Orange.widgets import gui
 
@@ -20,6 +21,8 @@ class WorldBankDataWidget(OWWidget):
 
 if __name__ == "__main__":
     import sys
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
     a = QtGui.QApplication(sys.argv)
     ow = WorldBankDataWidget()
     ow.show()
