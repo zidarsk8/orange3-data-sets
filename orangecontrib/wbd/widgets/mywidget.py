@@ -27,29 +27,43 @@ class WorldBankDataWidget(OWWidget):
     def __init__(self):
         super().__init__()
 
+        self.api = wbpy.IndicatorAPI()
         layout = QtGui.QGridLayout()
         button = QtGui.QPushButton("Fetch Data")
         button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = CountryFilterWidget()
         self.indicators = IndicatorFilterWidget()
-        self.ata = DataTableWidget()
+        self.data_widget = DataTableWidget()
         layout.addWidget(button, 0, 0)
         layout.addWidget(self.countries, 1, 0)
         layout.addWidget(self.indicators, 2, 0)
-        layout.addWidget(self.ata, 0, 1, 3, 1)
+        layout.addWidget(self.data_widget, 0, 1, 3, 1)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def fetch_button_clicked(self):
-        print(self.countries.get_filtered_data())
-        print(self.indicators.get_filtered_data())
-        print("TODO: get selected countries and stuff")
+        countries = self.countries.get_filtered_data()
+        if not countries:
+            countries = None
+        else:
+            countries = countries.keys()
+
+        # for now we'll support ony a single indicator since we can only do one
+        # indicator lookup per request. And we don't want to make too many
+        # requests
+        indicator = next(iter(self.indicators.get_filtered_data()))
+
+        data = self.api.get_dataset(indicator, country_codes=countries, mrv=5)
+        self.data_widget.fill_data(data)
 
 
 class DataTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
+
+    def fill_data(self, data):
+        pass
 
 
 class FilteredTableWidget(QtGui.QWidget):
@@ -76,6 +90,10 @@ class IndicatorFilterWidget(FilteredTableWidget):
 
     def __init__(self):
         super().__init__(IndicatorTableWidget)
+        self.filter_widget.filter_text.setText("SP.POP.TOTL")
+        self.filter_widget.ok_button_clicked()
+
+
 
 
 class CountryFilterWidget(FilteredTableWidget):
