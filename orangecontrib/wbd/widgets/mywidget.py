@@ -32,15 +32,17 @@ class WorldBankDataWidget(OWWidget):
         button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = CountryFilterWidget()
-        self.ndicators = IndicatorFilterWidget()
+        self.indicators = IndicatorFilterWidget()
         self.ata = DataTableWidget()
         layout.addWidget(button, 0, 0)
         layout.addWidget(self.countries, 1, 0)
-        layout.addWidget(self.ndicators, 2, 0)
+        layout.addWidget(self.indicators, 2, 0)
         layout.addWidget(self.ata, 0, 1, 3, 1)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def fetch_button_clicked(self):
+        print(self.countries.get_filtered_data())
+        print(self.indicators.get_filtered_data())
         print("TODO: get selected countries and stuff")
 
 
@@ -57,14 +59,17 @@ class FilteredTableWidget(QtGui.QWidget):
 
         layout = QtGui.QGridLayout()
 
-        filter_widget = SimpleFilterWidget()
-        table_widget = table_widget_class()
-        layout.addWidget(filter_widget)
-        layout.addWidget(table_widget)
+        self.filter_widget = SimpleFilterWidget()
+        self.table_widget = table_widget_class()
+        layout.addWidget(self.filter_widget)
+        layout.addWidget(self.table_widget)
 
         self.setLayout(layout)
-        if callable(getattr(table_widget, "filter_data", None)):
-            filter_widget.register_callback(table_widget.filter_data)
+        if callable(getattr(self.table_widget, "filter_data", None)):
+            self.filter_widget.register_callback(self.table_widget.filter_data)
+
+    def get_filtered_data(self):
+        return self.table_widget.get_filtered_data()
 
 
 class IndicatorFilterWidget(FilteredTableWidget):
@@ -119,7 +124,7 @@ class FilterTableWidget(QtGui.QTableWidget):
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.filtered_data = collections.OrderedDict()
 
-    def get_data(self):
+    def get_filtered_data(self):
         indexes = [item.row() for item in self.selectionModel().selectedRows()]
         key_list = list(self.filtered_data.keys())
         indicators = self.filtered_data
