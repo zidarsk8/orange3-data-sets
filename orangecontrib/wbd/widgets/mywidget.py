@@ -35,14 +35,27 @@ class CountryListWidget(QtGui.QWidget):
 
         layout = QtGui.QGridLayout()
 
+        filter_widget = SimpleFilterWidget()
+        country_list = CountryTableWidget()
+        layout.addWidget(filter_widget)
+        layout.addWidget(country_list)
+
+        self.setLayout(layout)
+
+
+class SimpleFilterWidget(QtGui.QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        layout = QtGui.QHBoxLayout()
+
         filter_label = QtGui.QLabel("Filter")
         filter_text = QtGui.QLineEdit()
         filter_button = QtGui.QPushButton("Ok")
-        country_list = CountryTableWidget()
-        layout.addWidget(filter_label, 0, 0)
-        layout.addWidget(filter_text, 0, 1)
-        layout.addWidget(filter_button, 0, 2)
-        layout.addWidget(country_list, 1, 0, 1, 3)
+        layout.addWidget(filter_label)
+        layout.addWidget(filter_text)
+        layout.addWidget(filter_button)
 
         self.setLayout(layout)
 
