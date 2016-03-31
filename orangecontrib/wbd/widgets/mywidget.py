@@ -11,7 +11,7 @@ from Orange.widgets import gui
 
 
 def set_trace(self):
-    import ipdb;
+    import ipdb
     QtCore.pyqtRemoveInputHook()
     ipdb.set_trace()
     # QtCore.pyqtRestoreInputHook()
@@ -112,11 +112,27 @@ class SimpleFilterWidget(QtGui.QWidget):
             raise TypeError("Callback argument must be a callable function.")
 
 
-class CountryTableWidget(QtGui.QTableWidget):
+class FilterTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
-        self.displayed_countries = {}
+        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.filtered_data = collections.OrderedDict()
+
+    def get_data(self):
+        indexes = [item.row() for item in self.selectionModel().selectedRows()]
+        key_list = list(self.filtered_data.keys())
+        indicators = self.filtered_data
+        selected_data = {key_list[index]: indicators[key_list[index]]
+                         for index in indexes}
+        return selected_data
+
+
+class CountryTableWidget(FilterTableWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.filtered_data = {}
         self.fetch_country_data()
         self.setColumnCount(3)
         self.filter_data()
@@ -149,7 +165,7 @@ class CountryTableWidget(QtGui.QTableWidget):
     def draw_items(self, countries=None):
         if countries is None:
             countries = self.countries
-        self.displayed_countries = countries
+        self.filtered_data = countries
         self.setRowCount(len(countries))
         for index, data in enumerate(countries):
             income_level = "{} ({})".format(
@@ -162,30 +178,13 @@ class CountryTableWidget(QtGui.QTableWidget):
                 countries[data]["name"]))
 
 
-class IndicatorTableWidget(QtGui.QTableWidget):
+class IndicatorTableWidget(FilterTableWidget):
 
     def __init__(self):
         super().__init__()
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-
-        self.cellClicked.connect(self.cell_clicked)
-        self.displayed_indicators = {}
         self.fetch_country_data()
         self.setColumnCount(4)
         self.filter_data()
-
-    def cell_clicked(self):
-        set_trace(self)
-        data = self.get_data()
-        print(indexes)
-
-    def get_data(self):
-        indexes = [item.row() for item in self.selectionModel().selectedRows()]
-        key_list = list(self.displayed_indicators.keys())
-        indicators = self.displayed_indicators
-        selected_data = {key_list[index]: indicators[key_list[index]]
-                         for index in indexes}
-        print(selected_data)
 
     def fetch_country_data(self):
         api = wbpy.IndicatorAPI()
@@ -215,7 +214,7 @@ class IndicatorTableWidget(QtGui.QTableWidget):
     def draw_items(self, indicators=None):
         if indicators is None:
             indicators = self.indicators
-        self.displayed_indicators = indicators
+        self.filtered_data = indicators
         self.setRowCount(len(indicators))
         for index, data in enumerate(indicators):
             source = "{} ({})".format(
