@@ -11,7 +11,7 @@ from Orange.widgets import gui
 
 
 def set_trace(self):
-    import ipdb
+    import ipdb;
     QtCore.pyqtRemoveInputHook()
     ipdb.set_trace()
     # QtCore.pyqtRestoreInputHook()
@@ -27,66 +27,27 @@ class WorldBankDataWidget(OWWidget):
     def __init__(self):
         super().__init__()
 
-        self.api = wbpy.IndicatorAPI()
         layout = QtGui.QGridLayout()
         button = QtGui.QPushButton("Fetch Data")
         button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = CountryFilterWidget()
-        self.indicators = IndicatorFilterWidget()
-        self.data_widget = DataTableWidget()
+        self.ndicators = IndicatorFilterWidget()
+        self.ata = DataTableWidget()
         layout.addWidget(button, 0, 0)
         layout.addWidget(self.countries, 1, 0)
-        layout.addWidget(self.indicators, 2, 0)
-        layout.addWidget(self.data_widget, 0, 1, 3, 1)
+        layout.addWidget(self.ndicators, 2, 0)
+        layout.addWidget(self.ata, 0, 1, 3, 1)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def fetch_button_clicked(self):
-        countries = self.countries.get_filtered_data()
-        if not countries:
-            countries = None
-        else:
-            countries = countries.keys()
-
-        # for now we'll support ony a single indicator since we can only do one
-        # indicator lookup per request. And we don't want to make too many
-        # requests
-        indicator = next(iter(self.indicators.get_filtered_data()))
-
-        data = self.api.get_dataset(indicator, country_codes=countries, mrv=5)
-        self.data_widget.fill_data(data)
+        print("TODO: get selected countries and stuff")
 
 
 class DataTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
-
-    def _get_unique_dates(self, dataset):
-        """Return a list of all dates found in the dataset.
-
-        This is used when there is data missing for some countries and so we
-        get a full list of dates.
-        Note; maybe it would be better to replace this with range and take into
-        account the quarters and months so that if there is a year missing in
-        all countries, that the dataset would still contain those lines"""
-        date_sets = [set(value.keys()) for value in dataset.values()]
-        return sorted(set().union(*date_sets))
-
-    def fill_data(self, dataset):
-        data_dict = dataset.as_dict()
-        self.setHorizontalHeaderLabels(list(dataset.countries.values()))
-        dates = self._get_unique_dates(data_dict)
-        self.setRowCount(len(dates))
-        self.setColumnCount(len(data_dict))
-        date_indexes = {date: index for index, date in enumerate(dates)}
-        for column, country_data in enumerate(data_dict.values()):
-            for date, value in country_data.items():
-                self.setItem(
-                    date_indexes[date],
-                    column,
-                    QtGui.QTableWidgetItem(str(value))
-                )
 
 
 class FilteredTableWidget(QtGui.QWidget):
@@ -96,25 +57,20 @@ class FilteredTableWidget(QtGui.QWidget):
 
         layout = QtGui.QGridLayout()
 
-        self.filter_widget = SimpleFilterWidget()
-        self.table_widget = table_widget_class()
-        layout.addWidget(self.filter_widget)
-        layout.addWidget(self.table_widget)
+        filter_widget = SimpleFilterWidget()
+        table_widget = table_widget_class()
+        layout.addWidget(filter_widget)
+        layout.addWidget(table_widget)
 
         self.setLayout(layout)
-        if callable(getattr(self.table_widget, "filter_data", None)):
-            self.filter_widget.register_callback(self.table_widget.filter_data)
-
-    def get_filtered_data(self):
-        return self.table_widget.get_filtered_data()
+        if callable(getattr(table_widget, "filter_data", None)):
+            filter_widget.register_callback(table_widget.filter_data)
 
 
 class IndicatorFilterWidget(FilteredTableWidget):
 
     def __init__(self):
         super().__init__(IndicatorTableWidget)
-        self.filter_widget.filter_text.setText("SP.POP.TOTL")
-        self.filter_widget.ok_button_clicked()
 
 
 class CountryFilterWidget(FilteredTableWidget):
@@ -156,27 +112,11 @@ class SimpleFilterWidget(QtGui.QWidget):
             raise TypeError("Callback argument must be a callable function.")
 
 
-class FilterTableWidget(QtGui.QTableWidget):
+class CountryTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.filtered_data = collections.OrderedDict()
-
-    def get_filtered_data(self):
-        indexes = [item.row() for item in self.selectionModel().selectedRows()]
-        key_list = list(self.filtered_data.keys())
-        indicators = self.filtered_data
-        selected_data = {key_list[index]: indicators[key_list[index]]
-                         for index in indexes}
-        return selected_data
-
-
-class CountryTableWidget(FilterTableWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.filtered_data = {}
+        self.displayed_countries = {}
         self.fetch_country_data()
         self.setColumnCount(3)
         self.filter_data()
@@ -209,7 +149,7 @@ class CountryTableWidget(FilterTableWidget):
     def draw_items(self, countries=None):
         if countries is None:
             countries = self.countries
-        self.filtered_data = countries
+        self.displayed_countries = countries
         self.setRowCount(len(countries))
         for index, data in enumerate(countries):
             income_level = "{} ({})".format(
@@ -222,13 +162,30 @@ class CountryTableWidget(FilterTableWidget):
                 countries[data]["name"]))
 
 
-class IndicatorTableWidget(FilterTableWidget):
+class IndicatorTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
+        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+
+        self.cellClicked.connect(self.cell_clicked)
+        self.displayed_indicators = {}
         self.fetch_country_data()
         self.setColumnCount(4)
         self.filter_data()
+
+    def cell_clicked(self):
+        set_trace(self)
+        data = self.get_data()
+        print(indexes)
+
+    def get_data(self):
+        indexes = [item.row() for item in self.selectionModel().selectedRows()]
+        key_list = list(self.displayed_indicators.keys())
+        indicators = self.displayed_indicators
+        selected_data = {key_list[index]: indicators[key_list[index]]
+                         for index in indexes}
+        print(selected_data)
 
     def fetch_country_data(self):
         api = wbpy.IndicatorAPI()
@@ -258,7 +215,7 @@ class IndicatorTableWidget(FilterTableWidget):
     def draw_items(self, indicators=None):
         if indicators is None:
             indicators = self.indicators
-        self.filtered_data = indicators
+        self.displayed_indicators = indicators
         self.setRowCount(len(indicators))
         for index, data in enumerate(indicators):
             source = "{} ({})".format(
