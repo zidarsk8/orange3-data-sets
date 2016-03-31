@@ -73,8 +73,13 @@ class CountryTableWidget(QtGui.QTableWidget):
         self.setRowCount(len(countries))
 
         for index, data in enumerate(countries):
+            income_level = "{} ({})".format(
+                countries[data]["incomeLevel"]["value"],
+                countries[data]["incomeLevel"]["id"],
+            )
             self.setItem(index, 0, QtGui.QTableWidgetItem(data))
-            self.setItem(index, 1, QtGui.QTableWidgetItem(
+            self.setItem(index, 1, QtGui.QTableWidgetItem(income_level))
+            self.setItem(index, 2, QtGui.QTableWidgetItem(
                 countries[data]["name"]))
 
 
