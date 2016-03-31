@@ -23,44 +23,40 @@ class WorldBankDataWidget(OWWidget):
         layout = QtGui.QGridLayout()
         button = QtGui.QPushButton("hello")
 
-        countries = CountryListWidget()
-        indicators = IndicatorListWidget()
+        countries = CountryFilterWidget()
+        indicators = IndicatorFilterWidget()
         layout.addWidget(button)
         layout.addWidget(countries)
         layout.addWidget(indicators)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
 
-class IndicatorListWidget(QtGui.QWidget):
+class FilteredTableWidget(QtGui.QWidget):
 
-    def __init__(self):
+    def __init__(self, table_widget_class):
         super().__init__()
 
         layout = QtGui.QGridLayout()
 
         filter_widget = SimpleFilterWidget()
-        country_list = IndicatorTableWidget()
+        table_widget = table_widget_class()
         layout.addWidget(filter_widget)
-        layout.addWidget(country_list)
+        layout.addWidget(table_widget)
 
         self.setLayout(layout)
-        filter_widget.register_callback(country_list.filter_data)
+        if callable(getattr(table_widget, "filter_data", None)):
+            filter_widget.register_callback(table_widget.filter_data)
 
-
-class CountryListWidget(QtGui.QWidget):
+class IndicatorFilterWidget(FilteredTableWidget):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(IndicatorTableWidget)
 
-        layout = QtGui.QGridLayout()
 
-        filter_widget = SimpleFilterWidget()
-        country_list = CountryTableWidget()
-        layout.addWidget(filter_widget)
-        layout.addWidget(country_list)
+class CountryFilterWidget(FilteredTableWidget):
 
-        self.setLayout(layout)
-        filter_widget.register_callback(country_list.filter_data)
+    def __init__(self):
+        super().__init__(CountryTableWidget)
 
 
 class SimpleFilterWidget(QtGui.QWidget):
