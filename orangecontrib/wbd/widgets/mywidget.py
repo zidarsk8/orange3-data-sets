@@ -51,13 +51,19 @@ class SimpleFilterWidget(QtGui.QWidget):
         layout = QtGui.QHBoxLayout()
 
         filter_label = QtGui.QLabel("Filter")
-        filter_text = QtGui.QLineEdit()
-        filter_button = QtGui.QPushButton("Ok")
+        self.filter_text = QtGui.QLineEdit(self)
+        filter_button = QtGui.QPushButton(self, text="Ok", autoDefault=True)
+        filter_button.clicked.connect(self.ok_button_clicked)
+        self.filter_text.returnPressed.connect(filter_button.click)
+
         layout.addWidget(filter_label)
-        layout.addWidget(filter_text)
+        layout.addWidget(self.filter_text)
         layout.addWidget(filter_button)
 
         self.setLayout(layout)
+
+    def ok_button_clicked(self):
+        print("hello world")
 
 
 class CountryTableWidget(QtGui.QTableWidget):
