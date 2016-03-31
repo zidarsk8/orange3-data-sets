@@ -3,7 +3,7 @@ from Orange.widgets.widget import OWWidget
 from Orange.widgets import gui
 
 
-class MyWidget(OWWidget):
+class WorldBankDataWidget(OWWidget):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "Hello World"
@@ -16,3 +16,12 @@ class MyWidget(OWWidget):
         label = QtGui.QLabel("Hello, World!")
         self.controlArea.layout().addWidget(
             label, QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+
+if __name__ == "__main__":
+    import sys
+    a = QtGui.QApplication(sys.argv)
+    ow = WorldBankDataWidget()
+    ow.show()
+    a.exec_()
+    ow.saveSettings()
