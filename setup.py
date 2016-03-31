@@ -7,20 +7,20 @@ ENTRY_POINTS = {
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
     'orange.widgets.tutorials': (
         # Syntax: any_text = path.to.package.containing.tutorials
-        'exampletutorials = orangecontrib.example.tutorials',
+        'exampletutorials = orangecontrib.wbd.tutorials',
     ),
 
     # Entry point used to specify packages containing widgets.
     'orange.widgets': (
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
-        #    orangecontrib/example/widgets/__init__.py
-        'My Category = orangecontrib.example.widgets',
+        #    orangecontrib/wbd/widgets/__init__.py
+        'Data = orangecontrib.wbd.widgets',
     ),
 
     # Register widget help
     "orange.canvas.help": (
-        'html-index = orangecontrib.example.widgets:WIDGET_HELP_PATH',)
+        'html-index = orangecontrib.wbd.widgets:WIDGET_HELP_PATH',)
 }
 
 KEYWORDS = (
@@ -31,14 +31,14 @@ KEYWORDS = (
 
 if __name__ == '__main__':
     setup(
-        name="Orange3 Example Add-on",
+        name="World Bank Data",
         packages=['orangecontrib',
-                  'orangecontrib.example',
-                  'orangecontrib.example.tutorials',
-                  'orangecontrib.example.widgets'],
+                  'orangecontrib.wbd',
+                  'orangecontrib.wbd.tutorials',
+                  'orangecontrib.wbd.widgets'],
         package_data={
-            'orangecontrib.example': ['tutorials/*.ows'],
-            'orangecontrib.example.widgets': ['icons/*'],
+            'orangecontrib.wbd': ['tutorials/*.ows'],
+            'orangecontrib.wbd.widgets': ['icons/*'],
         },
         install_requires=['Orange'],
         entry_points=ENTRY_POINTS,
