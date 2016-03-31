@@ -168,8 +168,8 @@ class IndicatorTableWidget(QtGui.QTableWidget):
             return (
                 filter_str.lower() in item[0].lower() or
                 filter_str.lower() in item[1]["name"].lower() or
-                filter_str.lower() in item[1]["incomeLevel"]["id"].lower() or
-                filter_str.lower() in item[1]["incomeLevel"]["value"].lower()
+                filter_str.lower() in item[1]["source"]["id"].lower() or
+                filter_str.lower() in item[1]["source"]["value"].lower()
             )
         if filter_str:
             filtered_list = collections.OrderedDict(
