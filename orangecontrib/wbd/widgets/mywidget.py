@@ -5,6 +5,7 @@ import collections
 
 
 from PyQt4 import QtGui
+from PyQt4 import QtCore
 from Orange.widgets.widget import OWWidget
 from Orange.widgets import gui
 
@@ -41,12 +42,14 @@ class CountryListWidget(QtGui.QWidget):
         layout.addWidget(country_list)
 
         self.setLayout(layout)
+        filter_widget.register_callback(country_list.filter_data)
 
 
 class SimpleFilterWidget(QtGui.QWidget):
 
     def __init__(self):
         super().__init__()
+        self.callbacks = set()
 
         layout = QtGui.QHBoxLayout()
 
@@ -62,14 +65,24 @@ class SimpleFilterWidget(QtGui.QWidget):
 
         self.setLayout(layout)
 
+    @QtCore.pyqtSlot()
     def ok_button_clicked(self):
-        print("hello world")
+        text = self.filter_text.text()
+        for callback in self.callbacks:
+            callback(text)
+
+    def register_callback(self, callback):
+        if callable(callback):
+            self.callbacks.add(callback)
+        else:
+            raise TypeError("Callback argument must be a callable function.")
 
 
 class CountryTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
+        self.displayed_countries = {}
         self.fetch_country_data()
         self.setColumnCount(3)
         self.filter_data()
@@ -82,15 +95,28 @@ class CountryTableWidget(QtGui.QTableWidget):
             key=lambda item: item[1]["name"]
         ))
 
-    def filter_data(self, filter_string=None):
-        self.draw_items()
+    def filter_data(self, filter_str=""):
+        def check_item(item):
+            return (
+                filter_str.lower() in item[0].lower() or
+                filter_str.lower() in item[1]["name"].lower() or
+                filter_str.lower() in item[1]["incomeLevel"]["id"].lower() or
+                filter_str.lower() in item[1]["incomeLevel"]["value"].lower()
+            )
+        if filter_str:
+            filtered_list = collections.OrderedDict(
+                item for item in self.countries.items() if check_item(item)
+            )
+        else:
+            filtered_list = self.countries
+
+        self.draw_items(filtered_list)
 
     def draw_items(self, countries=None):
         if countries is None:
             countries = self.countries
-
+        self.displayed_countries = countries
         self.setRowCount(len(countries))
-
         for index, data in enumerate(countries):
             income_level = "{} ({})".format(
                 countries[data]["incomeLevel"]["value"],
