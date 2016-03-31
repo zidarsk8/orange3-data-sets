@@ -62,8 +62,31 @@ class DataTableWidget(QtGui.QTableWidget):
     def __init__(self):
         super().__init__()
 
-    def fill_data(self, data):
-        pass
+    def _get_unique_dates(self, dataset):
+        """Return a list of all dates found in the dataset.
+
+        This is used when there is data missing for some countries and so we
+        get a full list of dates.
+        Note; maybe it would be better to replace this with range and take into
+        account the quarters and months so that if there is a year missing in
+        all countries, that the dataset would still contain those lines"""
+        date_sets = [set(value.keys()) for value in dataset.values()]
+        return sorted(set().union(*date_sets))
+
+    def fill_data(self, dataset):
+        data_dict = dataset.as_dict()
+        self.setHorizontalHeaderLabels(list(dataset.countries.values()))
+        dates = self._get_unique_dates(data_dict)
+        self.setRowCount(len(dates))
+        self.setColumnCount(len(data_dict))
+        date_indexes = {date: index for index, date in enumerate(dates)}
+        for column, country_data in enumerate(data_dict.values()):
+            for date, value in country_data.items():
+                self.setItem(
+                    date_indexes[date],
+                    column,
+                    QtGui.QTableWidgetItem(str(value))
+                )
 
 
 class FilteredTableWidget(QtGui.QWidget):
@@ -92,8 +115,6 @@ class IndicatorFilterWidget(FilteredTableWidget):
         super().__init__(IndicatorTableWidget)
         self.filter_widget.filter_text.setText("SP.POP.TOTL")
         self.filter_widget.ok_button_clicked()
-
-
 
 
 class CountryFilterWidget(FilteredTableWidget):
