@@ -1,3 +1,6 @@
+import sys
+import signal
+
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from Orange.widgets.widget import OWWidget
@@ -14,14 +17,36 @@ class WorldBankDataWidget(OWWidget):
     def __init__(self):
         super().__init__()
 
-        label = QtGui.QLabel("Hello, World!")
-        self.controlArea.layout().addWidget(
-            label, QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+        layout = QtGui.QGridLayout()
+        button = QtGui.QPushButton("hello")
+
+        countries = CountryListWidget()
+        layout.addWidget(button)
+        layout.addWidget(countries)
+        gui.widgetBox(self.controlArea, margin=0, orientation=layout)
+
+
+class CountryListWidget(QtGui.QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        layout = QtGui.QGridLayout()
+
+        filter_label = QtGui.QLabel("Filter")
+        filter_text = QtGui.QLineEdit()
+        filter_button = QtGui.QPushButton("Ok")
+        country_list = QtGui.QTableWidget()
+        layout.addWidget(filter_label,0,0)
+        layout.addWidget(filter_text,0,1)
+        layout.addWidget(filter_button,0,2)
+        layout.addWidget(country_list,1,0,1,3)
+
+
+        self.setLayout(layout)
 
 
 if __name__ == "__main__":
-    import sys
-    import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     a = QtGui.QApplication(sys.argv)
     ow = WorldBankDataWidget()
