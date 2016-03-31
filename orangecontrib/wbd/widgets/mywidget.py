@@ -1,6 +1,8 @@
 import sys
 import signal
 import wbpy
+import collections
+
 
 from PyQt4 import QtGui
 from Orange.widgets.widget import OWWidget
@@ -49,11 +51,17 @@ class CountryTableWidget(QtGui.QTableWidget):
 
     def __init__(self):
         super().__init__()
-        api = wbpy.IndicatorAPI()
-        self.countries = api.get_countries()
+        self.fetch_country_data()
         self.setColumnCount(3)
         self.filter_data()
 
+    def fetch_country_data(self):
+        api = wbpy.IndicatorAPI()
+        countries = api.get_countries()
+        self.countries = collections.OrderedDict(sorted(
+            countries.items(),
+            key=lambda item: item[1]["name"]
+        ))
 
     def filter_data(self, filter_string=None):
         self.draw_items()
@@ -65,12 +73,9 @@ class CountryTableWidget(QtGui.QTableWidget):
         self.setRowCount(len(countries))
 
         for index, data in enumerate(countries):
-            self.setItem(index, 0,QtGui.QTableWidgetItem(data))
-            self.setItem(index, 1,QtGui.QTableWidgetItem(countries[data]["name"]))
-
-
-
-
+            self.setItem(index, 0, QtGui.QTableWidgetItem(data))
+            self.setItem(index, 1, QtGui.QTableWidgetItem(
+                countries[data]["name"]))
 
 
 if __name__ == "__main__":
