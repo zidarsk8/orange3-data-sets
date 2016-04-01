@@ -48,7 +48,10 @@ class WorldBankDataWidget(OWWidget):
         # for now we'll support ony a single indicator since we can only do one
         # indicator lookup per request. And we don't want to make too many
         # requests
-        indicator = next(iter(self.indicators.get_filtered_data()))
+        indicators = self.indicators.get_filtered_data()
+        if not indicators:
+            return
+        indicator = next(iter(indicators))
 
         countries = self.countries.get_filtered_data()
         if not countries:
@@ -102,14 +105,19 @@ class DataTableWidget(QtGui.QTableWidget):
         self.setRowCount(len(dates))
         self.setColumnCount(len(data_dict))
         date_indexes = {date: index for index, date in enumerate(dates)}
-        for column, country_data in enumerate(data_dict.values()):
-            for date, value in country_data.items():
+        sorted_countries = sorted(dataset.countries.values())
+        country_index = {country:index for index,country in
+                           enumerate(sorted_countries)}
+
+        for country_id, data in data_dict.items():
+            column = country_index[dataset.countries[country_id]]
+            for date, value in data.items():
                 self.setItem(
                     date_indexes[date],
                     column,
                     QtGui.QTableWidgetItem(str(value))
                 )
-        self.setHorizontalHeaderLabels(list(dataset.countries.values()))
+        self.setHorizontalHeaderLabels(sorted_countries)
         self.setVerticalHeaderLabels(dates)
 
 
