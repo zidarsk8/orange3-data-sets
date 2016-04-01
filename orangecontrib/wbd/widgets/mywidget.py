@@ -44,18 +44,21 @@ class WorldBankDataWidget(OWWidget):
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def fetch_button_clicked(self):
-        countries = self.countries.get_filtered_data()
-        if not countries:
-            countries = None
-        else:
-            countries = countries.keys()
 
         # for now we'll support ony a single indicator since we can only do one
         # indicator lookup per request. And we don't want to make too many
         # requests
         indicator = next(iter(self.indicators.get_filtered_data()))
 
-        data = self.api.get_dataset(indicator, country_codes=countries, mrv=5)
+        countries = self.countries.get_filtered_data()
+        if not countries:
+            countries = None
+        else:
+            countries = countries.keys()
+
+        date = self.date.get_date_string()
+
+        data = self.api.get_dataset(indicator, country_codes=countries, date=date)
         self.data_widget.fill_data(data)
 
 
@@ -66,11 +69,15 @@ class DateInputWidget(QtGui.QWidget):
         layout = QtGui.QHBoxLayout()
 
         filter_label = QtGui.QLabel("Date")
-        self.filter_text = QtGui.QLineEdit(self)
+        self.date_text = QtGui.QLineEdit(self, text="2001:2016")
         layout.addWidget(filter_label)
-        layout.addWidget(self.filter_text)
+        layout.addWidget(self.date_text)
 
         self.setLayout(layout)
+
+    def get_date_string(self):
+        # todo: validation
+        return self.date_text.text()
 
 
 class DataTableWidget(QtGui.QTableWidget):
