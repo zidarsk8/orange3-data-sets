@@ -1,7 +1,6 @@
 import sys
 import signal
 import wbpy
-import collections
 
 
 from PyQt4 import QtGui
@@ -9,6 +8,8 @@ from PyQt4 import QtCore
 from Orange.widgets.widget import OWWidget
 from Orange.widgets import gui
 from orangecontrib.wbd.widgets import simple_filter_widget
+from orangecontrib.wbd.widgets import indicator_table_widget
+from orangecontrib.wbd.widgets import country_table_widget
 
 
 def set_trace(self):
@@ -62,7 +63,8 @@ class WorldBankDataWidget(OWWidget):
 
         date = self.date.get_date_string()
 
-        data = self.api.get_dataset(indicator, country_codes=countries, date=date)
+        data = self.api.get_dataset(
+            indicator, country_codes=countries, date=date)
         self.data_widget.fill_data(data)
 
 
@@ -107,8 +109,8 @@ class DataTableWidget(QtGui.QTableWidget):
         self.setColumnCount(len(data_dict))
         date_indexes = {date: index for index, date in enumerate(dates)}
         sorted_countries = sorted(dataset.countries.values())
-        country_index = {country:index for index,country in
-                           enumerate(sorted_countries)}
+        country_index = {country: index for index, country in
+                         enumerate(sorted_countries)}
 
         for country_id, data in data_dict.items():
             column = country_index[dataset.countries[country_id]]
@@ -145,7 +147,7 @@ class FilteredTableWidget(QtGui.QWidget):
 class IndicatorFilterWidget(FilteredTableWidget):
 
     def __init__(self):
-        super().__init__(IndicatorTableWidget)
+        super().__init__(indicator_table_widget.IndicatorTableWidget)
         self.filter_widget.filter_text.setText("DT.DOD.DECT.CD.GG.AR.US")
         self.filter_widget.ok_button_clicked()
 
@@ -153,132 +155,7 @@ class IndicatorFilterWidget(FilteredTableWidget):
 class CountryFilterWidget(FilteredTableWidget):
 
     def __init__(self):
-        super().__init__(CountryTableWidget)
-
-
-class FilterTableWidget(QtGui.QTableWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.filtered_data = collections.OrderedDict()
-
-    def get_filtered_data(self):
-        indexes = [item.row() for item in self.selectionModel().selectedRows()]
-        key_list = list(self.filtered_data.keys())
-        indicators = self.filtered_data
-        selected_data = {key_list[index]: indicators[key_list[index]]
-                         for index in indexes}
-        return selected_data
-
-
-class CountryTableWidget(FilterTableWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.filtered_data = {}
-        self.fetch_country_data()
-        self.setColumnCount(3)
-        self.filter_data()
-
-    def fetch_country_data(self):
-        api = wbpy.IndicatorAPI()
-        countries = api.get_countries()
-        self.countries = collections.OrderedDict(sorted(
-            countries.items(),
-            key=lambda item: item[1]["name"]
-        ))
-
-    def filter_data(self, filter_str=""):
-        def check_item(item):
-            return (
-                filter_str.lower() in item[0].lower() or
-                filter_str.lower() in item[1]["name"].lower() or
-                filter_str.lower() in item[1]["incomeLevel"]["id"].lower() or
-                filter_str.lower() in item[1]["incomeLevel"]["value"].lower()
-            )
-        if filter_str:
-            filtered_list = collections.OrderedDict(
-                item for item in self.countries.items() if check_item(item)
-            )
-        else:
-            filtered_list = self.countries
-
-        self.draw_items(filtered_list)
-
-    def draw_items(self, countries=None):
-        if countries is None:
-            countries = self.countries
-        self.filtered_data = countries
-        self.setRowCount(len(countries))
-        for index, data in enumerate(countries):
-            income_level = "{} ({})".format(
-                countries[data]["incomeLevel"]["value"],
-                countries[data]["incomeLevel"]["id"],
-            )
-            self.setItem(index, 0, QtGui.QTableWidgetItem(data))
-            self.setItem(index, 1, QtGui.QTableWidgetItem(income_level))
-            self.setItem(index, 2, QtGui.QTableWidgetItem(
-                countries[data]["name"]))
-        self.setHorizontalHeaderLabels([
-            "Id",
-            "Income Level",
-            "Name",
-        ])
-
-
-class IndicatorTableWidget(FilterTableWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.fetch_country_data()
-        self.setColumnCount(4)
-        self.filter_data()
-
-    def fetch_country_data(self):
-        api = wbpy.IndicatorAPI()
-        indicators = api.get_indicators(common_only=True)
-        self.indicators = collections.OrderedDict(sorted(
-            indicators.items(),
-            key=lambda item: item[1]["name"]
-        ))
-
-    def filter_data(self, filter_str=""):
-        def check_item(item):
-            return (
-                filter_str.lower() in item[0].lower() or
-                filter_str.lower() in item[1]["name"].lower() or
-                filter_str.lower() in item[1]["source"]["id"].lower() or
-                filter_str.lower() in item[1]["source"]["value"].lower()
-            )
-        if filter_str:
-            filtered_list = collections.OrderedDict(
-                item for item in self.indicators.items() if check_item(item)
-            )
-        else:
-            filtered_list = self.indicators
-
-        self.draw_items(filtered_list)
-
-    def draw_items(self, indicators=None):
-        if indicators is None:
-            indicators = self.indicators
-        self.filtered_data = indicators
-        self.setRowCount(len(indicators))
-        for index, data in enumerate(indicators):
-            source = "{} ({})".format(
-                indicators[data]["source"]["value"],
-                indicators[data]["source"]["id"],
-            )
-            self.setItem(index, 0, QtGui.QTableWidgetItem(data))
-            self.setItem(index, 1, QtGui.QTableWidgetItem(
-                indicators[data]["name"]))
-            self.setItem(index, 2, QtGui.QTableWidgetItem(source))
-        self.setHorizontalHeaderLabels([
-            "Id",
-            "Source",
-            "Name",
-        ])
+        super().__init__(country_table_widget.CountryTableWidget)
 
 
 if __name__ == "__main__":
