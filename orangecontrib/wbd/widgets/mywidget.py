@@ -145,7 +145,7 @@ class IndicatorFilterWidget(FilteredTableWidget):
 
     def __init__(self):
         super().__init__(IndicatorTableWidget)
-        self.filter_widget.filter_text.setText("SP.POP.TOTL")
+        self.filter_widget.filter_text.setText("DT.DOD.DECT.CD.GG.AR.US")
         self.filter_widget.ok_button_clicked()
 
 
@@ -252,6 +252,11 @@ class CountryTableWidget(FilterTableWidget):
             self.setItem(index, 1, QtGui.QTableWidgetItem(income_level))
             self.setItem(index, 2, QtGui.QTableWidgetItem(
                 countries[data]["name"]))
+        self.setHorizontalHeaderLabels([
+            "Id",
+            "Income Level",
+            "Name",
+        ])
 
 
 class IndicatorTableWidget(FilterTableWidget):
@@ -301,6 +306,11 @@ class IndicatorTableWidget(FilterTableWidget):
             self.setItem(index, 1, QtGui.QTableWidgetItem(
                 indicators[data]["name"]))
             self.setItem(index, 2, QtGui.QTableWidgetItem(source))
+        self.setHorizontalHeaderLabels([
+            "Id",
+            "Source",
+            "Name",
+        ])
 
 
 if __name__ == "__main__":
