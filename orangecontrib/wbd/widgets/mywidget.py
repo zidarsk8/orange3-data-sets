@@ -87,6 +87,7 @@ class DataTableWidget(QtGui.QTableWidget):
                     QtGui.QTableWidgetItem(str(value))
                 )
         self.setHorizontalHeaderLabels(list(dataset.countries.values()))
+        self.setVerticalHeaderLabels(dates)
 
 
 class FilteredTableWidget(QtGui.QWidget):
