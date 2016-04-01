@@ -75,7 +75,6 @@ class DataTableWidget(QtGui.QTableWidget):
 
     def fill_data(self, dataset):
         data_dict = dataset.as_dict()
-        self.setHorizontalHeaderLabels(list(dataset.countries.values()))
         dates = self._get_unique_dates(data_dict)
         self.setRowCount(len(dates))
         self.setColumnCount(len(data_dict))
@@ -87,6 +86,7 @@ class DataTableWidget(QtGui.QTableWidget):
                     column,
                     QtGui.QTableWidgetItem(str(value))
                 )
+        self.setHorizontalHeaderLabels(list(dataset.countries.values()))
 
 
 class FilteredTableWidget(QtGui.QWidget):
