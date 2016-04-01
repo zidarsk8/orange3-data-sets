@@ -35,10 +35,12 @@ class WorldBankDataWidget(OWWidget):
         self.countries = CountryFilterWidget()
         self.indicators = IndicatorFilterWidget()
         self.data_widget = DataTableWidget()
+        self.date = DateInputWidget()
         layout.addWidget(button, 0, 0)
         layout.addWidget(self.countries, 1, 0)
         layout.addWidget(self.indicators, 2, 0)
-        layout.addWidget(self.data_widget, 0, 1, 3, 1)
+        layout.addWidget(self.date, 3, 0)
+        layout.addWidget(self.data_widget, 0, 1, 4, 1)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def fetch_button_clicked(self):
@@ -55,6 +57,20 @@ class WorldBankDataWidget(OWWidget):
 
         data = self.api.get_dataset(indicator, country_codes=countries, mrv=5)
         self.data_widget.fill_data(data)
+
+
+class DateInputWidget(QtGui.QWidget):
+
+    def __init__(self):
+        super().__init__()
+        layout = QtGui.QHBoxLayout()
+
+        filter_label = QtGui.QLabel("Date")
+        self.filter_text = QtGui.QLineEdit(self)
+        layout.addWidget(filter_label)
+        layout.addWidget(self.filter_text)
+
+        self.setLayout(layout)
 
 
 class DataTableWidget(QtGui.QTableWidget):
