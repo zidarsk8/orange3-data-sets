@@ -35,7 +35,7 @@ class FilterDataTableWidget(QtGui.QTableWidget):
         super().__init__()
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.filtered_data = {}
-        self.data = data
+        self.data = data or []
         self.filter_data()
 
     def filter_data(self, filter_str=""):
