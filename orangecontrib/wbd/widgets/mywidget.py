@@ -34,8 +34,12 @@ class WorldBankDataWidget(OWWidget):
         button = QtGui.QPushButton("Fetch Data")
         button.clicked.connect(self.fetch_button_clicked)
 
-        self.countries = filter_table_widget.FilterTableWidget()
-        self.indicators = filter_table_widget.FilterTableWidget()
+        self.countries = filter_table_widget.FilterTableWidget(
+            data=self.api.get_country_list()
+        )
+        self.indicators = filter_table_widget.FilterTableWidget(
+            data=self.api.get_indicator_list()
+        )
         self.data_widget = data_table_widget.DataTableWidget()
         self.date = date_input_widget.DateInputWidget()
         layout.addWidget(button, 0, 0)
