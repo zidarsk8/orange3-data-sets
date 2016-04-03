@@ -1,12 +1,20 @@
+"""Data table widget module."""
+
 from PyQt4 import QtGui
 
 
 class DataTableWidget(QtGui.QTableWidget):
+    """Widget for displaying world bank data.
+
+    This widget is used for preview of world bank data fetched from the API. It
+    also allows transposing of the data.
+    """
 
     def __init__(self):
         super().__init__()
 
-    def _get_unique_dates(self, dataset):
+    @classmethod
+    def _get_unique_dates(cls, dataset):
         """Return a list of all dates found in the dataset.
 
         This is used when there is data missing for some countries and so we
@@ -18,6 +26,13 @@ class DataTableWidget(QtGui.QTableWidget):
         return sorted(set().union(*date_sets))
 
     def fill_data(self, dataset):
+        """Fill the main data table.
+
+        Args:
+          dataset (wbpy.IndicatorDataset): indicator dataset fetch from the
+              wbpy api.
+
+        """
         data_dict = dataset.as_dict()
         dates = self._get_unique_dates(data_dict)
         self.setRowCount(len(dates))
@@ -37,3 +52,6 @@ class DataTableWidget(QtGui.QTableWidget):
                 )
         self.setHorizontalHeaderLabels(sorted_countries)
         self.setVerticalHeaderLabels(dates)
+
+    def transpose(self):
+        """Transpose the displayed world bank data results."""

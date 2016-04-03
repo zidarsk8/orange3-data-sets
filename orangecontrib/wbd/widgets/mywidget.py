@@ -1,10 +1,17 @@
+"""Model with the main Orange Widget.
+
+This module contains the world bank data widget, used for fetching data from
+world bank data API.
+"""
+
 import sys
 import signal
-import wbpy
-
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+
+
+import wbpy
 from Orange.widgets.widget import OWWidget
 from Orange.widgets import gui
 from orangecontrib.wbd.widgets import filter_table_widget
@@ -12,7 +19,13 @@ from orangecontrib.wbd.widgets import date_input_widget
 from orangecontrib.wbd.widgets import data_table_widget
 
 
-def set_trace(self):
+
+def set_trace():
+    """Ipdb trace helper for Qt Applications.
+
+    Qt application runs in a input check loop and it makes ipdb useless. This
+    helper removes the hook while the debugger is running.
+    """
     import ipdb
     QtCore.pyqtRemoveInputHook()
     ipdb.set_trace()
@@ -20,6 +33,8 @@ def set_trace(self):
 
 
 class WorldBankDataWidget(OWWidget):
+    """World bank data widget for Orange."""
+
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "Hello World"
@@ -50,6 +65,12 @@ class WorldBankDataWidget(OWWidget):
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def fetch_button_clicked(self):
+        """Fetch button clicked for wbd.
+
+        Retrieve and display the response from world bank data if the
+        indicator, countries and dates have been properly set for a valid
+        query.
+        """
 
         # for now we'll support ony a single indicator since we can only do one
         # indicator lookup per request. And we don't want to make too many
@@ -72,10 +93,14 @@ class WorldBankDataWidget(OWWidget):
         self.data_widget.fill_data(data)
 
 
-if __name__ == "__main__":
+def main():
+    """Helper for running the widget without Orange."""
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    a = QtGui.QApplication(sys.argv)
-    ow = WorldBankDataWidget()
-    ow.show()
-    a.exec_()
-    ow.saveSettings()
+    app = QtGui.QApplication(sys.argv)
+    orange_widget = WorldBankDataWidget()
+    orange_widget.show()
+    app.exec_()
+    orange_widget.saveSettings()
+
+if __name__ == "__main__":
+    main()

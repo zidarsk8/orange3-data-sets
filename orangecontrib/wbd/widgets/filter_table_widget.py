@@ -1,9 +1,16 @@
+"""Modul for the filter table widget."""
+
 from PyQt4 import QtGui
 
 from orangecontrib.wbd.widgets import simple_filter_widget
 
 
 class FilterTableWidget(QtGui.QWidget):
+    """Main filter table widget.
+
+    This widget is used for displaying filtering and selecting any kind of data
+    fetched.
+    """
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -19,11 +26,17 @@ class FilterTableWidget(QtGui.QWidget):
         if callable(getattr(self.table_widget, "filter_data", None)):
             self.filter_widget.register_callback(self.table_widget.filter_data)
 
-    def get_filtered_data(self):
-        return self.table_widget.get_filtered_data()
+    def get_selected_data(self):
+        """Get data for user selected rows.
+
+        Returns:
+            list of dicts for all rows that a user has selected.
+        """
+        return self.table_widget.get_selected_data()
 
 
 class FilterDataTableWidget(QtGui.QTableWidget):
+    """Widget for displaying array of dicts in a table widget."""
 
     def __init__(self, data=None):
         """Init data table widget.
@@ -55,6 +68,15 @@ class FilterDataTableWidget(QtGui.QTableWidget):
         self.draw_items(filtered_list)
 
     def draw_items(self, data=None):
+        """Redraw all items.
+
+        Fill the table widget with the data given. The keys of the dict are set
+        for table headers and all the data is displayed below.
+
+        Args:
+            data (list of dict): Data that will be drawn. If none is given, it
+                defaults to self.data.
+        """
         if data is None:
             data = self.data
         if not data:
@@ -86,3 +108,11 @@ class FilterDataTableWidget(QtGui.QTableWidget):
         headers = list(element.keys())
         self.setHorizontalHeaderLabels(headers)
         return headers
+
+    def get_selected_data(self):
+        """Get data for user selected rows.
+
+        Returns:
+            list of dicts for all rows that a user has selected.
+        """
+        return self.data

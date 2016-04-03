@@ -1,3 +1,8 @@
+"""Main widget package.
+
+This package holds all files needed for the World Bank Data plugin.
+"""
+
 # Category metadata.
 
 # Category icon show in the menu
