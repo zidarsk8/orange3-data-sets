@@ -56,29 +56,7 @@ class WorldBankDataWidget(OWWidget):
         indicator, countries and dates have been properly set for a valid
         query.
         """
-
-        # for now we'll support ony a single indicator since we can only do one
-        # indicator lookup per request. And we don't want to make too many
-        # requests
-        indicators = self.indicators.get_filtered_data()
-        if not indicators:
-            return
-        indicator = next(iter(indicators))
-
-        countries = self.countries.get_filtered_data()
-        if not countries:
-            countries = None
-        else:
-            countries = countries.keys()
-
-        date = self.date.get_date_string()
-
-        data = self.api.get_dataset(
-            indicator,
-            country_codes=countries,
-            date=date
-        )
-        return data
+        print("fetch button clicked")
 
 
 def main():
