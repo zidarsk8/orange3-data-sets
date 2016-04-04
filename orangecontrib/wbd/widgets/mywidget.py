@@ -8,8 +8,6 @@ import sys
 import signal
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
-
 
 import wbpy
 from Orange.widgets.widget import OWWidget
@@ -17,19 +15,6 @@ from Orange.widgets import gui
 from orangecontrib.wbd.widgets import filter_table_widget
 from orangecontrib.wbd.widgets import date_input_widget
 from orangecontrib.wbd.widgets import data_table_widget
-
-
-
-def set_trace():
-    """Ipdb trace helper for Qt Applications.
-
-    Qt application runs in a input check loop and it makes ipdb useless. This
-    helper removes the hook while the debugger is running.
-    """
-    import ipdb
-    QtCore.pyqtRemoveInputHook()
-    ipdb.set_trace()
-    # QtCore.pyqtRestoreInputHook()
 
 
 class WorldBankDataWidget(OWWidget):
@@ -89,8 +74,11 @@ class WorldBankDataWidget(OWWidget):
         date = self.date.get_date_string()
 
         data = self.api.get_dataset(
-            indicator, country_codes=countries, date=date)
-        self.data_widget.fill_data(data)
+            indicator,
+            country_codes=countries,
+            date=date
+        )
+        return data
 
 
 def main():
