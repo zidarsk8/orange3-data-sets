@@ -1,18 +1,22 @@
+"""Tests for simple filter widget."""
 import unittest
-import mock
 
 from PyQt4 import QtTest
 from PyQt4 import QtCore
 
+import mock
 from orangecontrib.wbd.widgets import simple_filter_widget
 
 
 class TestSimpleFilterWidget(unittest.TestCase):
 
+    """Tests for simple filter widget."""
+
     def setUp(self):
         self.widget = simple_filter_widget.SimpleFilterWidget()
 
     def test_register_callback(self):
+        """Test registering of callbacks."""
         def dummy_function(arg):
             return arg
         self.widget.register_callback(lambda arg: arg)
@@ -26,6 +30,7 @@ class TestSimpleFilterWidget(unittest.TestCase):
         self.assertRaises(TypeError, lambda: self.widget.register_callback(2))
 
     def test_return_key_pressed(self):
+        """Test calling callbacks on return press in the filter_text."""
         callback = mock.MagicMock()
         self.widget.register_callback(callback)
         self.assertEqual(callback.call_count, 0)
@@ -50,6 +55,7 @@ class TestSimpleFilterWidget(unittest.TestCase):
         self.assertEqual(callback.call_args, (("",),))
 
     def test_ok_button_pressed(self):
+        """Test calling callbacks on ok button click"""
         callback = mock.MagicMock()
         self.widget.register_callback(callback)
 

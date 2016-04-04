@@ -8,4 +8,4 @@ import sys
 
 from PyQt4 import QtGui
 
-dummy_app = QtGui.QApplication(sys.argv)
+DUMMY_APP = QtGui.QApplication(sys.argv)
