@@ -37,6 +37,7 @@ class SimpleFilterWidget(QtGui.QWidget):
         This handlers calls all registered callbacks with the text that was
         entered in the filter_text field.
         """
+        print("okay button clicked")
         text = self.filter_text.text()
         for callback in self.callbacks:
             callback(text)
