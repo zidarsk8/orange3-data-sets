@@ -46,6 +46,7 @@ class FilterDataTableWidget(QtGui.QTableWidget):
                 column in the table. All dicts must contain all the same keys.
         """
         super().__init__()
+        self.previous_filter = None
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.filtered_data = {}
         self.data = data or []
@@ -57,6 +58,8 @@ class FilterDataTableWidget(QtGui.QTableWidget):
         Args:
             filter_str (str): String for filtering rows of data.
         """
+        if self.previous_filter == filter_str:
+            return
         if filter_str:
             filtered_list = [
                 item for item in self.data if
@@ -66,6 +69,7 @@ class FilterDataTableWidget(QtGui.QTableWidget):
             filtered_list = self.data
 
         self.draw_items(filtered_list)
+        self.previous_filter = filter_str
 
     def draw_items(self, data=None):
         """Redraw all items.
@@ -80,6 +84,7 @@ class FilterDataTableWidget(QtGui.QTableWidget):
         if data is None:
             data = self.data
         if not data:
+            self.setRowCount(0)
             return
 
         headers = self._set_column_headers(data[0])
