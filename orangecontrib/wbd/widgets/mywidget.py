@@ -49,7 +49,8 @@ class WorldBankDataWidget(OWWidget):
         layout.addWidget(self.data_widget, 0, 1, 4, 1)
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
-    def fetch_button_clicked(self):
+    @classmethod
+    def fetch_button_clicked(cls):
         """Fetch button clicked for wbd.
 
         Retrieve and display the response from world bank data if the
