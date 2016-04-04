@@ -1,23 +1,13 @@
-import sys
 import unittest
 import mock
 
-from PyQt4 import QtGui
 from PyQt4 import QtTest
 from PyQt4 import QtCore
 
 from orangecontrib.wbd.widgets import simple_filter_widget
 
 
-class testSimpleFilterWidget(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.app = QtGui.QApplication(sys.argv)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.app.exit()
+class TestSimpleFilterWidget(unittest.TestCase):
 
     def setUp(self):
         self.widget = simple_filter_widget.SimpleFilterWidget()
