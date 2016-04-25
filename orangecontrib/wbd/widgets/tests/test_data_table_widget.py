@@ -2,6 +2,8 @@
 
 import unittest
 
+from PyQt4 import QtTest
+
 from orangecontrib.wbd.widgets import data_table_widget
 
 
@@ -10,6 +12,8 @@ class TestSimpleFilterWidget(unittest.TestCase):
 
     def setUp(self):
         self.widget = data_table_widget.DataTableWidget()
+        self.widget.show()
+        QtTest.QTest.qWaitForWindowShown(self.widget)
         self.data = [
             [" ", "A", "B", "C"],
             ["1", "x", "y", "z"],
@@ -22,11 +26,16 @@ class TestSimpleFilterWidget(unittest.TestCase):
 
         Missing tests for headers
         """
-        self.widget.fill_data(self.data)
-        self.assertEqual(self.widget.item(0, 0).text(), "1")
-        self.assertEqual(self.widget.item(1, 0).text(), "2")
-        self.assertEqual(self.widget.item(2, 2).text(), "@")
-        self.assertIsNone(self.widget.item(3, 0))
+        data = self.data
+        self.widget.fill_data(data)
+        for row, row_data in enumerate(data[1:]):
+            for column, cell in enumerate(row_data):
+                self.assertEqual(self.widget.item(row, column).text(), cell)
+
+        self.assertIsNone(self.widget.item(len(data) + 1, len(data[0])))
+        self.assertIsNone(self.widget.item(len(data), len(data[0]) + 1))
+        self.assertIsNone(self.widget.item(-1, 0))
+        self.assertIsNone(self.widget.item(0, -1))
 
     def test_empty_data(self):
         """Test that data gets removed when filling with empty array."""
