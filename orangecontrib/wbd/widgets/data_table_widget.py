@@ -13,21 +13,21 @@ class DataTableWidget(QtGui.QTableWidget):
     def __init__(self):
         super().__init__()
 
-    def fill_data(self, data):
+    def fill_data(self, table_data):
         """Fill the main data table.
 
         Args:
-            data (list of lists): 2d array where the first column represents
+            table_data (list of lists): 2d array where the first column represents
             the data header.
         """
-        if not data or not data[0]:
+        if not table_data or not table_data[0]:
             self.setRowCount(0)
             self.setColumnCount(0)
             return
-        header = data.pop(0)
-        self.setRowCount(len(data))
+        header, cell_data = table_data[0], table_data[1:]
+        self.setRowCount(len(cell_data))
         self.setColumnCount(len(header))
         self.setHorizontalHeaderLabels(header)
-        for row, row_data in enumerate(data):
+        for row, row_data in enumerate(cell_data):
             for column, value in enumerate(row_data):
                 self.setItem(row, column, QtGui.QTableWidgetItem(str(value)))
