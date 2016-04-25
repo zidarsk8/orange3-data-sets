@@ -21,14 +21,26 @@ class TestSimpleFilterWidget(unittest.TestCase):
             ["3", "w", "@", "+"],
         ]
 
-    def test_fill_data(self):
-        """Test setting data from normal array.
+    def test_fill_data_headers(self):
+        """Test setting headers from normal array."""
+        self.widget.fill_data(self.data)
 
-        Missing tests for headers
-        """
-        data = self.data
-        self.widget.fill_data(data)
-        for row, row_data in enumerate(data[1:]):
+        headers = self.data[0]
+
+        for column, header in enumerate(headers):
+            self.assertEqual(self.widget.horizontalHeaderItem(column).text(),
+                             header)
+
+        self.assertIsNone(self.widget.horizontalHeaderItem(-1))
+        self.assertIsNone(self.widget.horizontalHeaderItem(len(headers) + 1))
+
+    def test_fill_data(self):
+        """Test setting data from normal array."""
+
+        self.widget.fill_data(self.data)
+        data = self.data[1:]
+
+        for row, row_data in enumerate(data):
             for column, cell in enumerate(row_data):
                 self.assertEqual(self.widget.item(row, column).text(), cell)
 
