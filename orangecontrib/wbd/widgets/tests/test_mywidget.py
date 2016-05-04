@@ -30,7 +30,7 @@ class TestWorldBankDataWidget(unittest.TestCase):
         """Test calling callbacks on return press in the filter_text."""
         self.assertEqual(self.fetch_event.call_count, 0)
         self.assertEqual(self.ok_event.call_count, 0)
-        QtTest.QTest.mouseClick(self.widget.button, QtCore.Qt.LeftButton)
+        QtTest.QTest.mouseClick(self.widget.fetch_button, QtCore.Qt.LeftButton)
         self.assertEqual(self.fetch_event.call_count, 1)
         QtTest.QTest.mouseClick(self.widget.countries.filter_widget.ok_button,
                                 QtCore.Qt.LeftButton)
