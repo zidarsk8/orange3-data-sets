@@ -31,7 +31,7 @@ class WorldBankDataWidget(OWWidget):
 
         self.api = wbpy.IndicatorAPI()
         layout = QtGui.QGridLayout()
-        self.fetch_button = QtGui.QPushButton("Fetch Data", autoDefault=True)
+        self.fetch_button = QtGui.QPushButton("Fetch Data")
         self.fetch_button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = filter_table_widget.FilterTableWidget(

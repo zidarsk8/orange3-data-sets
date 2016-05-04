@@ -20,7 +20,7 @@ class SimpleFilterWidget(QtGui.QWidget):
 
         filter_label = QtGui.QLabel("Filter")
         self.filter_text = QtGui.QLineEdit(self)
-        self.ok_button = QtGui.QPushButton(self, text="Ok", autoDefault=True)
+        self.ok_button = QtGui.QPushButton(self, text="Ok")
         self.ok_button.clicked.connect(self.ok_button_clicked)
         self.filter_text.returnPressed.connect(self.ok_button.click)
 
