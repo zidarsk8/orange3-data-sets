@@ -59,6 +59,14 @@ class WorldBankDataWidget(OWWidget):
         """
         print("fetch button clicked")
 
+    def keyPressEvent(self, event):
+        """Capture and ignore all key events.
+
+        This is used so that return key event does not trigger the exit button
+        from the dialog. We need to allow the return key to be used in filters
+        in the widget."""
+        pass
+
 
 def main():
     """Helper for running the widget without Orange."""
