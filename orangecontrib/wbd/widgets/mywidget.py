@@ -60,7 +60,7 @@ class WorldBankDataWidget(OWWidget):
         print("fetch button clicked")
 
 
-def main():
+def main():  # pragma: no cover
     """Helper for running the widget without Orange."""
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtGui.QApplication(sys.argv)
