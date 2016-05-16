@@ -1,6 +1,7 @@
 language: python
 
 python:
+  - "3.4"
   - "3.5"
 
 before_install:
@@ -40,7 +41,7 @@ install:
     - cat requirements.txt | xargs -n 1 -L 1 pip install -U
     - pip install codecov
 
-script: nosetests --with-coverage --cover-package=orangecontrib orangecontrib/wbd/widgets/tests/
+script: nosetests --with-coverage --cover-package=orangecontrib 
 
 after_success:
     - codecov

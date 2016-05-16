@@ -3,6 +3,7 @@ setuptools
 numpy
 scipy
 scikit-learn
+mock
 nose
 nose-cov
 pylint
