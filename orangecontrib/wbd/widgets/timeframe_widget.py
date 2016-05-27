@@ -24,7 +24,7 @@ class TimeFrameWidget(filter_table_widget.HideWidgetWrapper):
         super().__init__()
 
         self.api = wbpy.IndicatorAPI()
-        layout = QtGui.QGridLayout()
+        layout = QtGui.QFormLayout()
         self.source = self.FROM_DATE
 
         self.date_from = QtGui.QComboBox()
@@ -38,13 +38,13 @@ class TimeFrameWidget(filter_table_widget.HideWidgetWrapper):
 
         self.mrv_spinbox = QtGui.QSpinBox(self)
         self.mrv_spinbox.setMaximum(10000)
-        self.gapfill_checkbox = QtGui.QCheckBox("Fill Unknown Values")
+        self.gapfill_checkbox = QtGui.QCheckBox()
         self.mrv_spinbox.valueChanged.connect(self.mrv_changed)
 
-        layout.addWidget(self.date_from, 0, 0)
-        layout.addWidget(self.date_to, 0, 1)
-        layout.addWidget(self.mrv_spinbox, 1, 0)
-        layout.addWidget(self.gapfill_checkbox, 1, 1)
+        layout.addRow("From:", self.date_from)
+        layout.addRow("To:", self.date_to)
+        layout.addRow("Most Recent Values:", self.mrv_spinbox)
+        layout.addRow("Fill unknown Values:", self.gapfill_checkbox)
 
         self.setLayout(layout)
         self.set_timeframe()
