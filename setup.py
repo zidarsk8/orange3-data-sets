@@ -32,15 +32,24 @@ KEYWORDS = (
 if __name__ == '__main__':
     setup(
         name="World Bank Data",
-        packages=['orangecontrib',
-                  'orangecontrib.wbd',
-                  'orangecontrib.wbd.tutorials',
-                  'orangecontrib.wbd.widgets'],
+        packages=[
+            'orangecontrib',
+            'orangecontrib.wbd',
+            'orangecontrib.wbd.tutorials',
+            'orangecontrib.wbd.widgets'
+        ],
         package_data={
             'orangecontrib.wbd': ['tutorials/*.ows'],
             'orangecontrib.wbd.widgets': ['icons/*'],
         },
-        install_requires=['Orange'],
+        install_requires=[
+            'observable',
+            'wbpy-dev',
+        ],
+        depenedency_links=[
+            "git+ssh://git@github.com:zidarsk8/wbpy.git@old_cache"
+            "#egg=wbpy-dev"
+        ],
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
         namespace_packages=['orangecontrib'],
