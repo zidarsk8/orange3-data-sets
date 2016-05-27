@@ -188,7 +188,7 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             self.resizeColumnsToContents()
         else:
             self.setColumnWidth(0, 240)  # id field
-            for i in range(len(headers)-1):
+            for i in range(len(headers) - 1):
                 self.setColumnWidth(i, 400)
 
         if data:
@@ -212,6 +212,21 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         ))
         self.setHorizontalHeaderLabels(headers)
         return headers
+
+    def set_selected_data(self, filter_=None):
+        self.clearSelection()
+        if filter_ is None:
+            return
+        selection = self.selectionModel().selection()
+        for row in range(self.rowCount()):
+            for column in range(self.columnCount()):
+                if filter_.lower() in self.item(row, column).text().lower():
+                    self.selectRow(row)
+                    selection.merge(self.selectionModel().selection(),
+                                    QtGui.QItemSelectionModel.Select)
+
+        self.selectionModel().select(selection,
+                                     QtGui.QItemSelectionModel.Select)
 
     def get_selected_data(self):
         """Get data for user selected rows.

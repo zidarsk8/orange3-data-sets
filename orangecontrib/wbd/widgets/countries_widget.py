@@ -23,9 +23,13 @@ class CountriesWidget(filter_table_widget.HideWidgetWrapper):
         layout = QtGui.QGridLayout()
 
         toggle_label = QtGui.QLabel("Toggle selection: ")
-        toggle_all = QtGui.QPushButton("All")
+        toggle_all = QtGui.QPushButton("All Locations")
         toggle_countries = QtGui.QPushButton("Countries")
         toggle_aggregates = QtGui.QPushButton("Aggregates")
+
+        toggle_all.clicked.connect(self.togle_all_click)
+        toggle_countries.clicked.connect(self.togle_countries_click)
+        toggle_aggregates.clicked.connect(self.togle_aggregates_click)
 
         self.countries = filter_table_widget.FilterTableWidget(
             data=self.api.get_country_list(),
@@ -42,6 +46,15 @@ class CountriesWidget(filter_table_widget.HideWidgetWrapper):
         self.countries.table_widget.on("selection_changed",
                                        self.selection_changed)
         self.countries.table_widget.selection_changed()
+
+    def togle_all_click(self):
+        self.countries.table_widget.set_selected_data("")
+
+    def togle_countries_click(self):
+        self.countries.table_widget.set_selected_data()
+
+    def togle_aggregates_click(self):
+        self.countries.table_widget.set_selected_data("Aggregates (NA)")
 
     def selection_changed(self, selected_ids):
         if not selected_ids:
