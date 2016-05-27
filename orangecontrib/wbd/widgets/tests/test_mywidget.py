@@ -5,6 +5,7 @@ from PyQt4 import QtTest
 from PyQt4 import QtCore
 
 import mock
+from datetime import date
 from orangecontrib.wbd.widgets import mywidget
 
 
@@ -43,3 +44,26 @@ class TestWorldBankDataWidget(unittest.TestCase):
                               QtCore.Qt.Key_Return)
         self.assertEqual(fetch_event.call_count, 0)
         self.assertEqual(ok_event.call_count, 1)
+
+    @mock.patch("Orange.widgets.widget.OWWidget.send")
+    def test_send_data(self, send):
+        widget = mywidget.WorldBankDataWidget()
+        data = [
+            ["Date", "Si", "USA"],
+            [date(2001, 1, 1), "1", "4"],
+            [date(2004, 4, 1), "2", "5"],
+            [date(2006, 8, 1), "3", "6"],
+        ]
+        widget.send_data(data)
+        self.assertEquals(send.call_count, 1)
+
+    @mock.patch("Orange.widgets.widget.OWWidget.send")
+    def test_send_data_transposed(self, send):
+        widget = mywidget.WorldBankDataWidget()
+        data = [
+            ["country", "2001", "2002"],
+            ["Slovenia", "1", "4"],
+            ["World", "2", "5"],
+        ]
+        widget.send_data(data)
+        self.assertEquals(send.call_count, 1)

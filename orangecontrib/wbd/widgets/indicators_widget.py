@@ -26,7 +26,7 @@ class IndicatorsWidget(filter_table_widget.HideWidgetWrapper):
         layout = QtGui.QGridLayout()
 
         with benchmark.Benchmark("fetching indicator data"):
-            data = self.api.get_indicator_list(common_only=False)
+            data = self.api.get_indicator_list(common_only=True)
 
         self.indicators = filter_table_widget.FilterTableWidget(data=data)
         layout.addWidget(self.indicators)
@@ -50,3 +50,9 @@ class IndicatorsWidget(filter_table_widget.HideWidgetWrapper):
             self.set_title(selected_ids[0])
         else:
             self.set_title()
+
+    def get_indicator(self):
+        selected = self.indicators.get_selected_data()
+        if selected:
+            return selected[0]
+        return None

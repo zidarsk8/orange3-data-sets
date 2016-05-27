@@ -1,7 +1,5 @@
 """Modul for the filter table widget."""
 
-import logging
-
 from PyQt4 import QtGui
 
 from orangecontrib.wbd.widgets import simple_filter_widget
@@ -112,7 +110,7 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         """
         super(FilterDataTableWidget, self).__init__()
 
-
+        self.selected_ids = []
         self.events = collections.defaultdict(list)
         self.previous_filter = None
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
@@ -129,11 +127,11 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
 
     def selection_changed(self):
         rows = self.selectionModel().selectedRows()
-        row_ids = []
+        self.selected_ids = []
         for row in rows:
-            row_ids.append(self.item(row.row(), 0).text())
+            self.selected_ids.append(self.item(row.row(), 0).text())
 
-        self.trigger("selection_changed", row_ids)
+        self.trigger("selection_changed", self.selected_ids)
 
     def filter_data(self, filter_str=""):
         """Filter data with a string and refresh the table.
@@ -147,7 +145,8 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             with benchmark.Benchmark("Filtering values"):
                 filtered_list = [
                     item for item in self.data if
-                    any(filter_str.lower() in value.lower() for value in item.values())
+                    any(filter_str.lower() in value.lower()
+                        for value in item.values())
                 ]
         else:
             filtered_list = self.data
@@ -165,35 +164,36 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             data (list of dict): Data that will be drawn. If none is given, it
                 defaults to self.data.
         """
-        with benchmark.Benchmark("Draw items"):
-            if data is None:
-                data = self.data
-            if not data:
-                self.setRowCount(0)
-                return
+        if data is None:
+            data = self.data
+        if not data:
+            self.setRowCount(0)
+            return
 
-            headers = self._set_column_headers(data[0])
-            header_index = {key: index for index, key in enumerate(headers)}
+        headers = self._set_column_headers(data[0])
+        header_index = {key: index for index, key in enumerate(headers)}
 
-            self.filtered_data = data
-            self.setRowCount(len(data))
+        self.filtered_data = data
+        self.setRowCount(len(data))
 
-            with benchmark.Benchmark("Fill all items"):
-                for index, row_data in enumerate(data):
-                    for key, value in row_data.items():
-                        self.setItem(
-                            index,
-                            header_index[key],
-                            QtGui.QTableWidgetItem(value),
-                        )
+        for index, row_data in enumerate(data):
+            for key, value in row_data.items():
+                self.setItem(
+                    index,
+                    header_index[key],
+                    QtGui.QTableWidgetItem(value),
+                )
 
-            if len(data) < 500:
-                with benchmark.Benchmark("Resize Columns"):
-                    self.resizeColumnsToContents()
-            else:
-                self.setColumnWidth(0,240)
-                self.setColumnWidth(1,400)
-                self.setColumnWidth(2,400)
+        if len(data) < 500:
+            self.resizeColumnsToContents()
+        else:
+            self.setColumnWidth(0, 240)  # id field
+            for i in range(len(headers)-1):
+                self.setColumnWidth(i, 400)
+
+        if data:
+            self.selectRow(0)
+            self.selection_changed()
 
     def _set_column_headers(self, element):
         """Set column count and header text.
@@ -219,4 +219,4 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         Returns:
             list of dicts for all rows that a user has selected.
         """
-        return self.data
+        return self.selected_ids
