@@ -82,7 +82,7 @@ class WorldBankDataWidget(widget.OWWidget):
 
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "Hello World"
+    name = "World Bank Data"
     icon = "icons/mywidget.svg"
     category = "Data"
     want_main_area = False
