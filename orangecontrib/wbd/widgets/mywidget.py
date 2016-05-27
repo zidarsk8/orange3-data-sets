@@ -24,10 +24,12 @@ from orangecontrib.wbd.widgets import timeframe_widget
 
 LOGGER = logging.getLogger(__name__)
 
+
 class IndicatorWidget(QtGui.QWidget):
 
     def __init__(self, data_callback):
         super().__init__()
+        self.setAutoFillBackground(True)
         self.data_callback = data_callback
         LOGGER.debug("Initializing {}".format(self.__class__.__name__))
 
@@ -71,6 +73,7 @@ class ClimateWidget(QtGui.QWidget):
 
     def __init__(self, data_callback):
         super().__init__()
+        self.setAutoFillBackground(True)
         self.data_callback = data_callback
 
 
@@ -133,20 +136,6 @@ class WorldBankDataWidget(widget.OWWidget):
         data = Orange.data.Table(domain, data[1:])
 
         self.send("Data", data)
-        print(data)
-
-        #  from Orange.data import Table, Domain
-
-        #  from Orange.data import ContinuousVariable, DiscreteVariable, StringVariable
-
-        #  import numpy as np
-
-        #  domain = Domain([ContinuousVariable("population"), DiscreteVariable("area")])
-
-        #  data = Table(domain, [[1, 5],[2,44]])
-
-        #  data
-
 
     def keyPressEvent(self, event):
         """Capture and ignore all key press events.
