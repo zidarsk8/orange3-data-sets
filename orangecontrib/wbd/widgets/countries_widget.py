@@ -41,9 +41,13 @@ class CountriesWidget(filter_table_widget.HideWidgetWrapper):
 
         self.countries.table_widget.on("selection_changed",
                                        self.selection_changed)
+        self.countries.table_widget.selection_changed()
 
     def selection_changed(self, selected_ids):
-        self.set_title(",".join(selected_ids))
+        if not selected_ids:
+            self.set_title("All Countries")
+        else:
+            self.set_title(",".join(selected_ids))
 
     def get_counries(self):
         return self.countries.get_selected_data()

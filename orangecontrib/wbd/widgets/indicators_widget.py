@@ -34,6 +34,7 @@ class IndicatorsWidget(filter_table_widget.HideWidgetWrapper):
 
         self.indicators.table_widget.on("selection_changed",
                                         self.selection_changed)
+        self.indicators.table_widget.selection_changed()
 
     def selection_changed(self, selected_ids):
         """Callback function for selected indicators.
