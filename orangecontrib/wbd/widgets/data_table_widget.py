@@ -17,8 +17,8 @@ class DataTableWidget(QtGui.QTableWidget):
         """Fill the main data table.
 
         Args:
-            table_data (list of lists): 2d array where the first column represents
-            the data header.
+            table_data (list of lists): 2d array where the first column
+            represents the data header.
         """
         if not table_data or not table_data[0]:
             self.setRowCount(0)
@@ -31,3 +31,5 @@ class DataTableWidget(QtGui.QTableWidget):
         for row, row_data in enumerate(cell_data):
             for column, value in enumerate(row_data):
                 self.setItem(row, column, QtGui.QTableWidgetItem(str(value)))
+
+        self.resizeColumnsToContents()
