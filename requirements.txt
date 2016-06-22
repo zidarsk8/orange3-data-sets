@@ -4,8 +4,9 @@ numpy
 scipy
 scikit-learn
 mock
+observable
 nose
 nose-cov
 pylint
 git+https://github.com/biolab/orange3.git@3.3.3#egg=Orange
-git+https://github.com/zidarsk8/wbpy.git@b193239360a1e78fff0e77ae4383843ccbf8ac50
+git+https://github.com/zidarsk8/wbpy.git@old_cache

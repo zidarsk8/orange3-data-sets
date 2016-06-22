@@ -40,7 +40,9 @@ if __name__ == '__main__':
             'orangecontrib.wbd': ['tutorials/*.ows'],
             'orangecontrib.wbd.widgets': ['icons/*'],
         },
-        install_requires=['Orange'],
+        install_requires=[
+            'observable'
+        ],
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
         namespace_packages=['orangecontrib'],

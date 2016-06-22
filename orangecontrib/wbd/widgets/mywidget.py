@@ -16,13 +16,14 @@ import Orange
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
+from Orange.widgets.utils import concurrent
 from orangecontrib.wbd.widgets import data_table_widget
 from orangecontrib.wbd.widgets import indicators_widget
 from orangecontrib.wbd.widgets import countries_widget
 from orangecontrib.wbd.widgets import timeframe_widget
 
 
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class IndicatorWidget(QtGui.QWidget):
@@ -31,7 +32,7 @@ class IndicatorWidget(QtGui.QWidget):
         super().__init__()
         self.setAutoFillBackground(True)
         self.data_callback = data_callback
-        LOGGER.debug("Initializing {}".format(self.__class__.__name__))
+        logger.debug("Initializing {}".format(self.__class__.__name__))
 
         self.api = wbpy.IndicatorAPI()
         layout = QtGui.QVBoxLayout()
@@ -46,7 +47,28 @@ class IndicatorWidget(QtGui.QWidget):
         layout.addWidget(self.timeframe)
         layout.addWidget(self.button)
         layout.setAlignment(QtCore.Qt.AlignTop)
+
+        self._executor = concurrent.ThreadExecutor(
+            threadPool=QtCore.QThreadPool(maxThreadCount=2)
+        )
+        self._task = concurrent.Task(function=self._delay)
+        self._task.resultReady.connect(self._delay_completed)
+        self._task.exceptionReady.connect(self._delay_exception)
+        self._executor.submit(self._task)
+
         self.setLayout(layout)
+
+    def _delay(self):
+        logger.debug("delay start")
+        import time
+        time.sleep(4)
+        logger.debug("eraly bidr")
+
+    def _delay_exception(self):
+        logger.debug("delay exception")
+
+    def _delay_completed(self):
+        logger.debug("delay copmleted")
 
     def fetch_button_clicked(self):
         """Fetch button clicked for wbd.
@@ -55,14 +77,14 @@ class IndicatorWidget(QtGui.QWidget):
         indicator, countries and dates have been properly set for a valid
         query.
         """
-        LOGGER.debug("Fetch indicator data")
+        logger.debug("Fetch indicator data")
         indicator = self.indicators.get_indicator()
         countries = self.countries.get_counries()
         timeframe = self.timeframe.get_timeframe()
 
-        LOGGER.debug(indicator)
-        LOGGER.debug(countries)
-        LOGGER.debug(timeframe)
+        logger.debug(indicator)
+        logger.debug(countries)
+        logger.debug(timeframe)
         dataset = self.api.get_dataset(indicator, country_codes=countries,
                                        **timeframe)
         data_list = dataset.as_list(use_datetime=True)
@@ -92,7 +114,7 @@ class WorldBankDataWidget(widget.OWWidget):
 
     def __init__(self):
         super().__init__()
-        LOGGER.debug("Initializing {}".format(self.__class__.__name__))
+        logger.debug("Initializing {}".format(self.__class__.__name__))
 
         self.api = wbpy.IndicatorAPI()
         layout = QtGui.QHBoxLayout()
@@ -118,13 +140,13 @@ class WorldBankDataWidget(widget.OWWidget):
             first_column = Orange.data.TimeVariable("Date")
             for row in data[1:]:
 
-                LOGGER.debug(row)
-                LOGGER.debug(row[0].isoformat())
+                logger.debug(row)
+                logger.debug(row[0].isoformat())
                 row[0] = first_column.parse(row[0].isoformat())
         elif data[0][0] == "Country":
             first_column = Orange.data.StringVariable("Country")
 
-        LOGGER.debug(data)
+        logger.debug(data)
 
         domain_columns = [first_column] + [
             Orange.data.ContinuousVariable(column_name)
