@@ -17,7 +17,7 @@ from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
 from orangecontrib.wbd.widgets import indicators_list_widget
-from orangecontrib.wbd.widgets import countries_widget
+from orangecontrib.wbd.widgets import countries_list
 from orangecontrib.wbd.widgets import timeframe_widget
 
 
@@ -48,7 +48,7 @@ class IndicatorAPI(widget.OWWidget):
         self.button = QtGui.QPushButton("Fetch Data")
         self.button.clicked.connect(self.fetch_button_clicked)
 
-        self.countries = countries_widget.CountriesWidget()
+        self.countries = countries_list.CountriesList()
         self.indicators = indicators_list_widget.IndicatorsListWidget()
         self.timeframe = timeframe_widget.TimeFrameWidget()
 

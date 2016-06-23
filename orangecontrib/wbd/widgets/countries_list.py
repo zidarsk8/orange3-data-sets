@@ -17,7 +17,7 @@ from orangecontrib.wbd.widgets import filter_table_widget
 logger = logging.getLogger(__name__)
 
 
-class CountriesWidget(QtGui.QWidget):
+class CountriesList(QtGui.QWidget):
 
     TITLE_TEMPLATE = "Countries: {}"
 
