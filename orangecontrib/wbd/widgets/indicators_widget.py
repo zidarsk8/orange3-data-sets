@@ -8,18 +8,17 @@ import sys
 import signal
 import logging
 
+import simple_wbd
+import Orange
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-
-import wbpy
-import Orange
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
+
 from orangecontrib.wbd.widgets import indicators_list
 from orangecontrib.wbd.widgets import countries_list
 from orangecontrib.wbd.widgets import timeframe
-
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +39,11 @@ class IndicatorAPI(widget.OWWidget):
     def __init__(self):
         super().__init__()
         logger.debug("Initializing {}".format(self.__class__.__name__))
+        self._init_layout()
 
-        self.api = wbpy.IndicatorAPI()
+    def _init_layout(self):
+        """Initialize widget layout."""
+        self.api = simple_wbd.IndicatorAPI()
         layout = QtGui.QVBoxLayout()
 
         self.toolbox = QtGui.QToolBox()
@@ -83,15 +85,13 @@ class IndicatorAPI(widget.OWWidget):
         query.
         """
         logger.debug("Fetch indicator data")
-        indicator = self.indicators.get_indicator()
+        indicators = self.indicators.get_indicators()
         countries = self.countries.get_counries()
         timeframe = self.timeframe.get_timeframe()
 
-        logger.debug(indicator)
+        logger.debug(indicators)
         logger.debug(countries)
-        logger.debug(timeframe)
-        dataset = self.api.get_dataset(indicator, country_codes=countries,
-                                       **timeframe)
+        dataset = self.api.get_dataset(indicators, countries=countries)
         data_list = dataset.as_list(use_datetime=True)
         self.send_data(data_list)
 
@@ -103,24 +103,18 @@ class IndicatorAPI(widget.OWWidget):
         if data[0][0] == "Date":
             first_column = Orange.data.TimeVariable("Date")
             for row in data[1:]:
-
-                logger.debug(row)
-                logger.debug(row[0].isoformat())
                 row[0] = first_column.parse(row[0].isoformat())
         elif data[0][0] == "Country":
             first_column = Orange.data.StringVariable("Country")
 
-        logger.debug(data)
-
+        logger.debug("Sending %s data rows.", len(data))
         domain_columns = [first_column] + [
             Orange.data.ContinuousVariable(column_name)
             for column_name in data[0][1:]
         ]
 
         domain = Orange.data.Domain(domain_columns)
-
         data = Orange.data.Table(domain, data[1:])
-
         self.send("Data", data)
 
     def keyPressEvent(self, event):
