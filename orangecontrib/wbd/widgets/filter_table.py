@@ -63,7 +63,7 @@ class FilterDataTable(QtGui.QTableWidget, observable.Observable):
 
     ORDER_MAP = {name: index for index, name in enumerate(DEFAULT_ORDER)}
 
-    def __init__(self, data=None, multi_select=False):
+    def __init__(self, data=None, multi_select=True):
         """Init data table widget.
 
         Args:

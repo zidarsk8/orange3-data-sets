@@ -37,7 +37,7 @@ class CountriesList(QtGui.QWidget):
         toggle_countries.clicked.connect(self.togle_countries_click)
         toggle_aggregates.clicked.connect(self.togle_aggregates_click)
 
-        self.countries = filter_table.FilterTable(multi_select=True)
+        self.countries = filter_table.FilterTable()
 
         layout.addWidget(toggle_label, 0, 0)
         layout.addWidget(toggle_all, 0, 1)
