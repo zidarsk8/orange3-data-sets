@@ -64,6 +64,7 @@ class CountriesWidget(QtGui.QWidget):
         logger.debug("Fetch countries data")
         data = self.api.get_country_list()
         self.countries.table_widget.set_data(data)
+        self.togle_countries_click()
         self.countries.table_widget.selection_changed()
 
     def _fetch_countries_exception(self):
