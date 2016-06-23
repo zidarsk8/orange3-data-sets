@@ -1,12 +1,15 @@
 """Modul for the filter table widget."""
 
+import logging
+import collections
+
+import observable
 from PyQt4 import QtGui
 
 from orangecontrib.wbd.widgets import simple_filter_widget
 from orangecontrib.wbd.widgets import benchmark
 
-import observable
-import collections
+logger = logging.getLogger(__name__)
 
 
 class MaxWithLabel(QtGui.QLabel):
@@ -76,13 +79,11 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         if not multi_select:
             self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.filtered_data = {}
-        self.data = data or []
-        with benchmark.Benchmark("init filter data table"):
-            self.filter_data()
         self.itemSelectionChanged.connect(self.selection_changed)
         self.setSortingEnabled(True)
         self.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.setHorizontalScrollMode(QtGui.QAbstractItemView.ScrollPerPixel)
+        self.set_data(data)
 
     def selection_changed(self):
         rows = self.selectionModel().selectedRows()
@@ -92,12 +93,18 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
 
         self.trigger("selection_changed", self.selected_ids)
 
+    def set_data(self, data):
+        self.data = data or []
+        with benchmark.Benchmark("init filter data table"):
+            self._draw_items()
+
     def filter_data(self, filter_str=""):
         """Filter data with a string and refresh the table.
 
         Args:
             filter_str (str): String for filtering rows of data.
         """
+        logger.debug("filter data with: %s", filter_str)
         if self.previous_filter == filter_str:
             return
         if filter_str:
@@ -110,10 +117,10 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         else:
             filtered_list = self.data
 
-        self.draw_items(filtered_list)
+        self._draw_items(filtered_list)
         self.previous_filter = filter_str
 
-    def draw_items(self, data=None):
+    def _draw_items(self, data=None):
         """Redraw all items.
 
         Fill the table widget with the data given. The keys of the dict are set
@@ -123,9 +130,11 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             data (list of dict): Data that will be drawn. If none is given, it
                 defaults to self.data.
         """
+        logger.debug("Redrawing all items")
         if data is None:
             data = self.data
         if not data:
+            logger.debug("No data items to draw")
             self.setRowCount(0)
             return
 
