@@ -6,13 +6,15 @@ any indicator.
 
 import logging
 
-from PyQt4 import QtGui
 import wbpy
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.widgets import filter_table_widget
-from orangecontrib.wbd.widgets import benchmark
 
 logger = logging.getLogger(__name__)
+
 
 class IndicatorsListWidget(QtGui.QWidget):
     """Widget for filtering and selecting indicators."""
@@ -35,12 +37,31 @@ class IndicatorsListWidget(QtGui.QWidget):
                                         self.selection_changed)
         self.indicators.table_widget.selection_changed()
 
+        self._executor = concurrent.ThreadExecutor(
+            threadPool=QtCore.QThreadPool(maxThreadCount=2)
+        )
+        self._task = concurrent.Task(function=self._fetch_indicators_data)
+        self._task.resultReady.connect(self._fetch_indicators_completed)
+        self._task.exceptionReady.connect(self._fetch_indicators_exception)
+        self._executor.submit(self._task)
+
+    def _fetch_indicators_data(self):
+        logger.debug("Fetch indicator data")
+        import time
+        time.sleep(4)
+        data = self.api.get_indicator_list(common_only=True)
+        self.indicators.table_widget.set_data(data)
+
+    def _fetch_indicators_exception(self):
+        logger.error("Failed to load indicator list.")
+
+    def _fetch_indicators_completed(self):
+        logger.debug("Fetch indicator completed.")
 
     def set_title(self, title=""):
         if callable(self.text_setter):
             logger.debug("setting indicator widget title")
             self.text_setter(self.TITLE_TEMPLATE.format(title))
-
 
     def selection_changed(self, selected_ids):
         """Callback function for selected indicators.
