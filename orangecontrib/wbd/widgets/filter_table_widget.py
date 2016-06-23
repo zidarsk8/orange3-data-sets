@@ -19,47 +19,6 @@ class MaxWithLabel(QtGui.QLabel):
         super().setText(text)
 
 
-class HideWidgetWrapper(QtGui.QWidget):
-
-    TITLE_TEMPLATE = "Title {}"
-
-    def __init__(self):
-        super().__init__()
-
-        self.title_widget = QtGui.QWidget()
-        self.container_widget = QtGui.QWidget()
-
-        v_layout = QtGui.QVBoxLayout()
-
-        h_layout = QtGui.QHBoxLayout()
-        self._hidable_title = MaxWithLabel("")
-        self.button = QtGui.QPushButton("Hide")
-        h_layout.addWidget(self._hidable_title)
-        h_layout.addWidget(self.button)
-        self.title_widget.setLayout(h_layout)
-
-        v_layout.addWidget(self.title_widget)
-        v_layout.addWidget(self.container_widget)
-
-        self.button.clicked.connect(self.toggle_widget)
-        super().setLayout(v_layout)
-        self.set_title()
-
-    def set_title(self, text="-"):
-        self._hidable_title.setText(self.TITLE_TEMPLATE.format(text))
-
-    def setLayout(self, l):
-        self.container_widget.setLayout(l)
-
-    def toggle_widget(self):
-        if self.container_widget.isHidden():
-            self.container_widget.show()
-            self.button.setText("Hide")
-        else:
-            self.container_widget.hide()
-            self.button.setText("Show")
-
-
 class FilterTableWidget(QtGui.QWidget):
     """Main filter table widget.
 

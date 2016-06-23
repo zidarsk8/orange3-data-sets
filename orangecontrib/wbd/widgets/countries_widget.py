@@ -12,7 +12,7 @@ from orangecontrib.wbd.widgets import filter_table_widget
 import wbpy
 
 
-class CountriesWidget(filter_table_widget.HideWidgetWrapper):
+class CountriesWidget(QtGui.QWidget):
 
     TITLE_TEMPLATE = "Countries: {}"
 
@@ -57,6 +57,7 @@ class CountriesWidget(filter_table_widget.HideWidgetWrapper):
         self.countries.table_widget.set_selected_data("Aggregates (NA)")
 
     def selection_changed(self, selected_ids):
+        return
         if not selected_ids:
             self.set_title("All Countries")
         else:

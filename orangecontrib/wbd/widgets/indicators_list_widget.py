@@ -13,7 +13,7 @@ from orangecontrib.wbd.widgets import filter_table_widget
 from orangecontrib.wbd.widgets import benchmark
 
 
-class IndicatorsListWidget(filter_table_widget.HideWidgetWrapper):
+class IndicatorsListWidget(QtGui.QWidget):
     """Widget for filtering and selecting indicators."""
 
     TITLE_TEMPLATE = "Indicator: {}"
@@ -47,6 +47,7 @@ class IndicatorsListWidget(filter_table_widget.HideWidgetWrapper):
                 list should always contain just one indicator. If more
                 indicators are given, only the first one will be used.
         """
+        return
         if selected_ids:
             self.set_title(selected_ids[0])
         else:

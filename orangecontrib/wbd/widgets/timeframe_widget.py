@@ -9,10 +9,8 @@ from PyQt4 import QtGui
 
 import wbpy
 
-from orangecontrib.wbd.widgets import filter_table_widget
 
-
-class TimeFrameWidget(filter_table_widget.HideWidgetWrapper):
+class TimeFrameWidget(QtGui.QWidget):
 
     TITLE_TEMPLATE = "Time Frame: {}"
     START_YEAR = 1960
@@ -74,6 +72,7 @@ class TimeFrameWidget(filter_table_widget.HideWidgetWrapper):
         ))
 
     def set_timeframe(self):
+        return
         if self.source == self.FROM_DATE:
             self.set_date_timeframe()
         elif self.source == self.LAST_VALUES:
@@ -92,10 +91,12 @@ class TimeFrameWidget(filter_table_widget.HideWidgetWrapper):
             }
 
     def combo_box_changed(self):
+        return
         self.source = self.FROM_DATE
         self.set_timeframe()
 
     def mrv_changed(self):
+        return
         self.source = self.LAST_VALUES
         self.set_timeframe()
 
