@@ -26,18 +26,45 @@ class IndicatorsListWidget(QtGui.QWidget):
     def __init__(self):
         super().__init__()
         self.text_setter = None
-
+        self.data = None
+        self.filter_ = None
         self.api = simple_wbd.IndicatorAPI()
+
+        self._init_layout()
+        self._init_listeners()
+
+        self._fetch_data()
+
+    def _init_listeners(self):
+        self.indicators.table_widget.on(
+            "selection_changed", self._selection_changed)
+
+    def _init_layout(self):
         layout = QtGui.QGridLayout()
 
         self.indicators = filter_table.FilterTable()
-        layout.addWidget(self.indicators)
+
+        filter_label = QtGui.QLabel("Show: ")
+        radio_all = QtGui.QRadioButton("All")
+        radio_common = QtGui.QRadioButton("Common")
+        radio_featured = QtGui.QRadioButton("Featured")
+        radio_all.toggled.connect(
+            lambda: self._radio_selected(radio_all))
+        radio_common.toggled.connect(
+            lambda: self._radio_selected(radio_common))
+        radio_featured.toggled.connect(
+            lambda: self._radio_selected(radio_featured))
+
+        layout.addWidget(filter_label, 0, 0)
+        layout.addWidget(radio_all, 0, 1)
+        layout.addWidget(radio_common, 0, 2)
+        layout.addWidget(radio_featured, 0, 3)
+        layout.addWidget(self.indicators, 1, 0, 1, 4)
+
         self.setLayout(layout)
 
-        self.indicators.table_widget.on("selection_changed",
-                                        self.selection_changed)
-        self.indicators.table_widget.selection_changed()
-
+    def _fetch_data(self, filter_=None):
+        self.filter_ = filter_
         self._executor = concurrent.ThreadExecutor(
             threadPool=QtCore.QThreadPool(maxThreadCount=2)
         )
@@ -46,24 +73,28 @@ class IndicatorsListWidget(QtGui.QWidget):
         self._task.exceptionReady.connect(self._fetch_indicators_exception)
         self._executor.submit(self._task)
 
+    def _radio_selected(self, button):
+        logger.debug("%s radio button selected", button.text())
+        self._fetch_data(button.text())
+
     def _fetch_indicators_data(self):
-        time.sleep(1)  # bug if the list is loaded before the widget gets show.
         logger.debug("Fetch indicator data")
-        data = self.api.get_indicator_list(filter_=None)
-        self.indicators.table_widget.set_data(data)
+        self.data = self.api.get_indicator_list(filter_=self.filter_)
 
     def _fetch_indicators_exception(self):
         logger.error("Failed to load indicator list.")
 
     def _fetch_indicators_completed(self):
         logger.debug("Fetch indicator completed.")
+        if self.data:
+            self.indicators.table_widget.set_data(self.data)
 
-    def set_title(self, title=""):
+    def _set_title(self, title=""):
         if callable(self.text_setter):
             logger.debug("setting indicator widget title")
             self.text_setter(self.TITLE_TEMPLATE.format(title))
 
-    def selection_changed(self, selected_ids):
+    def _selection_changed(self, selected_ids):
         """Callback function for selected indicators.
 
         This function sets the title of the current widget to display the
@@ -76,9 +107,9 @@ class IndicatorsListWidget(QtGui.QWidget):
         """
         logger.debug("selection changed: %s", selected_ids)
         if selected_ids:
-            self.set_title(", ".join(selected_ids))
+            self._set_title(", ".join(selected_ids))
         else:
-            self.set_title()
+            self._set_title()
 
     def get_indicator(self):
         selected = self.indicators.get_selected_data()
