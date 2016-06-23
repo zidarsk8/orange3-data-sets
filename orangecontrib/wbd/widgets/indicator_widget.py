@@ -17,7 +17,6 @@ from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
 from Orange.widgets.utils import concurrent
-from orangecontrib.wbd.widgets import data_table_widget
 from orangecontrib.wbd.widgets import indicators_widget
 from orangecontrib.wbd.widgets import countries_widget
 from orangecontrib.wbd.widgets import timeframe_widget
@@ -26,12 +25,21 @@ from orangecontrib.wbd.widgets import timeframe_widget
 logger = logging.getLogger(__name__)
 
 
-class IndicatorWidget(QtGui.QWidget):
+class IndicatorAPI(widget.OWWidget):
+    """World bank data widget for Orange."""
 
-    def __init__(self, data_callback):
+    # Widget needs a name, or it is considered an abstract widget
+    # and not shown in the menu.
+    name = "World Bank Data"
+    icon = "icons/mywidget.svg"
+    category = "Data"
+    want_main_area = False
+    outputs = [widget.OutputSignal(
+        "Data", table.Table,
+        doc="Attribute-valued data set read from the input file.")]
+
+    def __init__(self):
         super().__init__()
-        self.setAutoFillBackground(True)
-        self.data_callback = data_callback
         logger.debug("Initializing {}".format(self.__class__.__name__))
 
         self.api = wbpy.IndicatorAPI()
@@ -56,7 +64,7 @@ class IndicatorWidget(QtGui.QWidget):
         self._task.exceptionReady.connect(self._delay_exception)
         self._executor.submit(self._task)
 
-        self.setLayout(layout)
+        gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def _delay(self):
         logger.debug("delay start")
@@ -88,50 +96,9 @@ class IndicatorWidget(QtGui.QWidget):
         dataset = self.api.get_dataset(indicator, country_codes=countries,
                                        **timeframe)
         data_list = dataset.as_list(use_datetime=True)
-        self.data_callback(data_list)
-
-
-class ClimateWidget(QtGui.QWidget):
-
-    def __init__(self, data_callback):
-        super().__init__()
-        self.setAutoFillBackground(True)
-        self.data_callback = data_callback
-
-
-class WorldBankDataWidget(widget.OWWidget):
-    """World bank data widget for Orange."""
-
-    # Widget needs a name, or it is considered an abstract widget
-    # and not shown in the menu.
-    name = "World Bank Data"
-    icon = "icons/mywidget.svg"
-    category = "Data"
-    want_main_area = False
-    outputs = [widget.OutputSignal(
-        "Data", table.Table,
-        doc="Attribute-valued data set read from the input file.")]
-
-    def __init__(self):
-        super().__init__()
-        logger.debug("Initializing {}".format(self.__class__.__name__))
-
-        self.api = wbpy.IndicatorAPI()
-        layout = QtGui.QHBoxLayout()
-        self.api_tabs = QtGui.QTabWidget()
-        indicators = IndicatorWidget(self.data_updated)
-        climate = ClimateWidget(self.data_updated)
-        self.api_tabs.addTab(indicators, "Indicators API")
-        self.api_tabs.addTab(climate, "Climate API")
-
-        self.data_widget = data_table_widget.DataTableWidget()
-        layout.addWidget(self.api_tabs)
-        layout.addWidget(self.data_widget)
-        gui.widgetBox(self.controlArea, margin=0, orientation=layout)
+        self.send_data(data_list)
 
     def data_updated(self, data_list):
-        self.data_widget.fill_data(data_list)
-
         self.send_data(data_list)
 
     def send_data(self, data):
@@ -173,7 +140,7 @@ def main():  # pragma: no cover
     logging.basicConfig(level=logging.DEBUG)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtGui.QApplication(sys.argv)
-    orange_widget = WorldBankDataWidget()
+    orange_widget = IndicatorAPI()
     orange_widget.show()
     app.exec_()
     orange_widget.saveSettings()
