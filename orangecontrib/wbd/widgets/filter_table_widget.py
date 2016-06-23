@@ -138,19 +138,16 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             self.setRowCount(0)
             return
 
-        headers = self._set_column_headers(data[0])
-        header_index = {key: index for index, key in enumerate(headers)}
+        headers, data = data[0], data[1:]
+        self.setColumnCount(len(headers))
+        self.setHorizontalHeaderLabels(headers)
 
         self.filtered_data = data
         self.setRowCount(len(data))
 
-        for index, row_data in enumerate(data):
-            for key, value in row_data.items():
-                self.setItem(
-                    index,
-                    header_index[key],
-                    QtGui.QTableWidgetItem(value),
-                )
+        for row, row_data in enumerate(data):
+            for column, cell_data in enumerate(row_data):
+                self.setItem(row, column, QtGui.QTableWidgetItem(cell_data))
 
         if len(data) < 500:
             self.resizeColumnsToContents()
@@ -162,24 +159,6 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         if data:
             self.selectRow(0)
             self.selection_changed()
-
-    def _set_column_headers(self, element):
-        """Set column count and header text.
-
-        Args:
-            element (dict): Dictionary containing single element.
-
-        Returns:
-            List of strings containing the order of headers.
-        """
-        max_order_index = len(self.DEFAULT_ORDER) + 1
-        self.setColumnCount(len(element.keys()))
-        headers = list(sorted(
-            element.keys(),
-            key=lambda x: self.ORDER_MAP.get(x, max_order_index)
-        ))
-        self.setHorizontalHeaderLabels(headers)
-        return headers
 
     def set_selected_data(self, filter_=None):
         self.clearSelection()
