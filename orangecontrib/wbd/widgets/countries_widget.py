@@ -1,13 +1,15 @@
 """Modul for Countries widget.
 
 This widget should contain all filters needed to help the user find and select
-any indicator.
+any country.
 """
 
 import logging
 
-from PyQt4 import QtGui
 import simple_wbd
+from PyQt4 import QtGui
+from PyQt4 import QtCore
+from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.widgets import filter_table_widget
 
@@ -35,8 +37,7 @@ class CountriesWidget(QtGui.QWidget):
         toggle_aggregates.clicked.connect(self.togle_aggregates_click)
 
         self.countries = filter_table_widget.FilterTableWidget(
-            data=self.api.get_country_list(),
-            multi_select=True,
+            multi_select=True
         )
 
         layout.addWidget(toggle_label, 0, 0)
@@ -48,11 +49,30 @@ class CountriesWidget(QtGui.QWidget):
 
         self.countries.table_widget.on("selection_changed",
                                        self.selection_changed)
+
+        self._executor = concurrent.ThreadExecutor(
+            threadPool=QtCore.QThreadPool(maxThreadCount=2)
+        )
+        self._task = concurrent.Task(function=self._fetch_countries_data)
+        self._task.resultReady.connect(self._fetch_countries_completed)
+        self._task.exceptionReady.connect(self._fetch_countries_exception)
+        self._executor.submit(self._task)
+
+    def _fetch_countries_data(self):
+        logger.debug("Fetch countries data")
+        data = self.api.get_country_list()
+        self.countries.table_widget.set_data(data)
         self.countries.table_widget.selection_changed()
+
+    def _fetch_countries_exception(self):
+        logger.error("Failed to load countries list.")
+
+    def _fetch_countries_completed(self):
+        logger.debug("Fetch countries completed.")
 
     def set_title(self, title=""):
         if callable(self.text_setter):
-            logger.debug("setting indicator widget title")
+            logger.debug("setting countries widget title")
             self.text_setter(self.TITLE_TEMPLATE.format(title))
 
     def togle_all_click(self):
