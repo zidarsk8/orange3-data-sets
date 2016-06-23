@@ -48,7 +48,7 @@ class IndicatorAPI(widget.OWWidget):
         self.button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = countries_widget.CountriesWidget()
-        self.indicators = indicators_widget.IndicatorsWidget()
+        self.indicators = indicators_widget.IndicatorsListWidget()
         self.timeframe = timeframe_widget.TimeFrameWidget()
         layout.addWidget(self.indicators)
         layout.addWidget(self.countries)

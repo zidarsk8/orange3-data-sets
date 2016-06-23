@@ -13,7 +13,7 @@ from orangecontrib.wbd.widgets import filter_table_widget
 from orangecontrib.wbd.widgets import benchmark
 
 
-class IndicatorsWidget(filter_table_widget.HideWidgetWrapper):
+class IndicatorsListWidget(filter_table_widget.HideWidgetWrapper):
     """Widget for filtering and selecting indicators."""
 
     TITLE_TEMPLATE = "Indicator: {}"
