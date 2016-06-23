@@ -16,7 +16,6 @@ import Orange
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
-from Orange.widgets.utils import concurrent
 from orangecontrib.wbd.widgets import indicators_list_widget
 from orangecontrib.wbd.widgets import countries_widget
 from orangecontrib.wbd.widgets import timeframe_widget
@@ -61,14 +60,6 @@ class IndicatorAPI(widget.OWWidget):
         layout.addWidget(self.button)
         layout.setAlignment(QtCore.Qt.AlignTop)
 
-        self._executor = concurrent.ThreadExecutor(
-            threadPool=QtCore.QThreadPool(maxThreadCount=2)
-        )
-        self._task = concurrent.Task(function=self._delay)
-        self._task.resultReady.connect(self._delay_completed)
-        self._task.exceptionReady.connect(self._delay_exception)
-        self._executor.submit(self._task)
-
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
 
     def _add_toolbox_item(self, item, name):
@@ -83,19 +74,6 @@ class IndicatorAPI(widget.OWWidget):
         item.text_setter = get_text_setter(self.toolbox.count())
 
         self.toolbox.addItem(item, name)
-
-
-    def _delay(self):
-        logger.debug("delay start")
-        import time
-        time.sleep(4)
-        logger.debug("eraly bidr")
-
-    def _delay_exception(self):
-        logger.debug("delay exception")
-
-    def _delay_completed(self):
-        logger.debug("delay copmleted")
 
     def fetch_button_clicked(self):
         """Fetch button clicked for wbd.
