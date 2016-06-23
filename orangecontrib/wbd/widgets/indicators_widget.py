@@ -44,15 +44,19 @@ class IndicatorAPI(widget.OWWidget):
 
         self.api = wbpy.IndicatorAPI()
         layout = QtGui.QVBoxLayout()
+
+        self.toolbox = QtGui.QToolBox()
         self.button = QtGui.QPushButton("Fetch Data")
         self.button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = countries_widget.CountriesWidget()
         self.indicators = indicators_list_widget.IndicatorsListWidget()
         self.timeframe = timeframe_widget.TimeFrameWidget()
-        layout.addWidget(self.indicators)
-        layout.addWidget(self.countries)
-        layout.addWidget(self.timeframe)
+
+        self.toolbox.addItem(self.indicators, "indicators")
+        self.toolbox.addItem(self.countries, "countries")
+        self.toolbox.addItem(self.timeframe, "time frame")
+        layout.addWidget(self.toolbox)
         layout.addWidget(self.button)
         layout.setAlignment(QtCore.Qt.AlignTop)
 
