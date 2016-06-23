@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class IndicatorsListWidget(QtGui.QWidget):
     """Widget for filtering and selecting indicators."""
 
-    TITLE_TEMPLATE = "Indicator: {}"
+    TITLE_TEMPLATE = "Indicators: {}"
     MAX_TITLE_CHARS = 50
 
     def __init__(self):
@@ -76,7 +76,7 @@ class IndicatorsListWidget(QtGui.QWidget):
         """
         logger.debug("selection changed: %s", selected_ids)
         if selected_ids:
-            self.set_title(selected_ids[0])
+            self.set_title(", ".join(selected_ids))
         else:
             self.set_title()
 
