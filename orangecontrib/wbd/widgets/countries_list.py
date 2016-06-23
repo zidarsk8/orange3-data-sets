@@ -12,7 +12,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.widgets.utils import concurrent
 
-from orangecontrib.wbd.widgets import filter_table_widget
+from orangecontrib.wbd.widgets import filter_table
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +37,7 @@ class CountriesList(QtGui.QWidget):
         toggle_countries.clicked.connect(self.togle_countries_click)
         toggle_aggregates.clicked.connect(self.togle_aggregates_click)
 
-        self.countries = filter_table_widget.FilterTableWidget(
-            multi_select=True
-        )
+        self.countries = filter_table.FilterTable(multi_select=True)
 
         layout.addWidget(toggle_label, 0, 0)
         layout.addWidget(toggle_all, 0, 1)

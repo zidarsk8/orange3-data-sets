@@ -12,7 +12,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.widgets.utils import concurrent
 
-from orangecontrib.wbd.widgets import filter_table_widget
+from orangecontrib.wbd.widgets import filter_table
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class IndicatorsListWidget(QtGui.QWidget):
         self.api = simple_wbd.IndicatorAPI()
         layout = QtGui.QGridLayout()
 
-        self.indicators = filter_table_widget.FilterTableWidget()
+        self.indicators = filter_table.FilterTable()
         layout.addWidget(self.indicators)
         self.setLayout(layout)
 

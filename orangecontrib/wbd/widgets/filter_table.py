@@ -6,7 +6,7 @@ import collections
 import observable
 from PyQt4 import QtGui
 
-from orangecontrib.wbd.widgets import simple_filter_widget
+from orangecontrib.wbd.widgets import simple_filter
 from orangecontrib.wbd.widgets import benchmark
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class MaxWithLabel(QtGui.QLabel):
         super().setText(text)
 
 
-class FilterTableWidget(QtGui.QWidget):
+class FilterTable(QtGui.QWidget):
     """Main filter table widget.
 
     This widget is used for displaying filtering and selecting any kind of data
@@ -34,8 +34,8 @@ class FilterTableWidget(QtGui.QWidget):
 
         layout = QtGui.QGridLayout()
 
-        self.filter_widget = simple_filter_widget.SimpleFilterWidget()
-        self.table_widget = FilterDataTableWidget(**kwargs)
+        self.filter_widget = simple_filter.SimpleFilter()
+        self.table_widget = FilterDataTable(**kwargs)
         layout.addWidget(self.filter_widget)
         layout.addWidget(self.table_widget)
 
@@ -52,7 +52,7 @@ class FilterTableWidget(QtGui.QWidget):
         return self.table_widget.get_selected_data()
 
 
-class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
+class FilterDataTable(QtGui.QTableWidget, observable.Observable):
     """Widget for displaying array of dicts in a table widget."""
 
     DEFAULT_ORDER = [
@@ -70,7 +70,7 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             data (list): List of dicts where each key in the dict represents a
                 column in the table. All dicts must contain all the same keys.
         """
-        super(FilterDataTableWidget, self).__init__()
+        super(FilterDataTable, self).__init__()
 
         self.selected_ids = []
         self.events = collections.defaultdict(list)

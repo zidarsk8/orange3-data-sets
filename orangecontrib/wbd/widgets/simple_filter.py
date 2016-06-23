@@ -4,7 +4,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 
-class SimpleFilterWidget(QtGui.QWidget):
+class SimpleFilter(QtGui.QWidget):
     """Simple filter widget with filter callbacks.
 
     This is a simple widget with filter text, text area and okay button. The

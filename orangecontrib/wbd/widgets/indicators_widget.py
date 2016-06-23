@@ -16,9 +16,9 @@ import Orange
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
-from orangecontrib.wbd.widgets import indicators_list_widget
+from orangecontrib.wbd.widgets import indicators_list
 from orangecontrib.wbd.widgets import countries_list
-from orangecontrib.wbd.widgets import timeframe_widget
+from orangecontrib.wbd.widgets import timeframe
 
 
 logger = logging.getLogger(__name__)
@@ -49,8 +49,8 @@ class IndicatorAPI(widget.OWWidget):
         self.button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = countries_list.CountriesList()
-        self.indicators = indicators_list_widget.IndicatorsListWidget()
-        self.timeframe = timeframe_widget.TimeFrameWidget()
+        self.indicators = indicators_list.IndicatorsListWidget()
+        self.timeframe = timeframe.TimeFrameWidget()
 
         self._add_toolbox_item(self.indicators, "indicators")
         self._add_toolbox_item(self.countries, "countries")
