@@ -109,10 +109,9 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
             return
         if filter_str:
             with benchmark.Benchmark("Filtering values"):
-                filtered_list = [
-                    item for item in self.data if
-                    any(filter_str.lower() in value.lower()
-                        for value in item.values())
+                filtered_list = [self.data[0]] + [
+                    row for row in self.data[1:] if
+                    any(filter_str.lower() in value.lower() for value in row)
                 ]
         else:
             filtered_list = self.data
@@ -152,8 +151,8 @@ class FilterDataTableWidget(QtGui.QTableWidget, observable.Observable):
         if len(data) < 500:
             self.resizeColumnsToContents()
         else:
-            self.setColumnWidth(0, 240)  # id field
-            for i in range(len(headers) - 1):
+            self.setColumnWidth(0, 200)  # id field
+            for i in range(1, len(headers)):
                 self.setColumnWidth(i, 400)
 
         if data:
