@@ -7,8 +7,6 @@ any indicator.
 import datetime
 from PyQt4 import QtGui
 
-import wbpy
-
 
 class TimeFrameWidget(QtGui.QWidget):
 
@@ -21,7 +19,6 @@ class TimeFrameWidget(QtGui.QWidget):
     def __init__(self):
         super().__init__()
 
-        self.api = wbpy.IndicatorAPI()
         layout = QtGui.QFormLayout()
         self.source = self.FROM_DATE
 
