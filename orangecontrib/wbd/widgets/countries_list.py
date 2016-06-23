@@ -24,6 +24,7 @@ class CountriesList(QtGui.QWidget):
     def __init__(self):
         super().__init__()
         self.text_setter = None
+        self.data = None
 
         self.api = simple_wbd.IndicatorAPI()
         layout = QtGui.QGridLayout()
@@ -46,9 +47,12 @@ class CountriesList(QtGui.QWidget):
         layout.addWidget(self.countries, 1, 0, 1, 4)
         self.setLayout(layout)
 
-        self.countries.table_widget.on("selection_changed",
-                                       self.selection_changed)
+        self.countries.table_widget.on(
+            "selection_changed", self.selection_changed)
 
+        self._fetch_data()
+
+    def _fetch_data(self):
         self._executor = concurrent.ThreadExecutor(
             threadPool=QtCore.QThreadPool(maxThreadCount=2)
         )
@@ -60,16 +64,17 @@ class CountriesList(QtGui.QWidget):
     def _fetch_countries_data(self):
         time.sleep(1)  # bug if the list is loaded before the widget gets show.
         logger.debug("Fetch countries data")
-        data = self.api.get_country_list()
-        self.countries.table_widget.set_data(data)
-        self.togle_countries_click()
-        self.countries.table_widget.selection_changed()
+        self.data = self.api.get_country_list()
 
     def _fetch_countries_exception(self):
         logger.error("Failed to load countries list.")
 
     def _fetch_countries_completed(self):
         logger.debug("Fetch countries completed.")
+        if self.data:
+            self.countries.table_widget.set_data(self.data)
+            self.togle_countries_click()
+            self.countries.table_widget.selection_changed()
 
     def set_title(self, title=""):
         if callable(self.text_setter):
