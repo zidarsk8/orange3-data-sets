@@ -27,10 +27,7 @@ class IndicatorsListWidget(QtGui.QWidget):
         self.api = wbpy.IndicatorAPI()
         layout = QtGui.QGridLayout()
 
-        with benchmark.Benchmark("fetching indicator data"):
-            data = self.api.get_indicator_list(common_only=True)
-
-        self.indicators = filter_table_widget.FilterTableWidget(data=data)
+        self.indicators = filter_table_widget.FilterTableWidget()
         layout.addWidget(self.indicators)
         self.setLayout(layout)
 

@@ -35,7 +35,6 @@ class CountriesWidget(QtGui.QWidget):
         toggle_aggregates.clicked.connect(self.togle_aggregates_click)
 
         self.countries = filter_table_widget.FilterTableWidget(
-            data=self.api.get_country_list(),
             multi_select=True,
         )
 
