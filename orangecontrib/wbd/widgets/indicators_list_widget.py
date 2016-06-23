@@ -4,9 +4,10 @@ This widget should contain all filters needed to help the user find and select
 any indicator.
 """
 
+import time
 import logging
 
-import wbpy
+import simple_wbd
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.widgets.utils import concurrent
@@ -26,7 +27,7 @@ class IndicatorsListWidget(QtGui.QWidget):
         super().__init__()
         self.text_setter = None
 
-        self.api = wbpy.IndicatorAPI()
+        self.api = simple_wbd.IndicatorAPI()
         layout = QtGui.QGridLayout()
 
         self.indicators = filter_table_widget.FilterTableWidget()
@@ -46,10 +47,9 @@ class IndicatorsListWidget(QtGui.QWidget):
         self._executor.submit(self._task)
 
     def _fetch_indicators_data(self):
+        time.sleep(1)  # bug if the list is loaded before the widget gets show.
         logger.debug("Fetch indicator data")
-        import time
-        time.sleep(4)
-        data = self.api.get_indicator_list(common_only=True)
+        data = self.api.get_indicator_list(filter_=None)
         self.indicators.table_widget.set_data(data)
 
     def _fetch_indicators_exception(self):
