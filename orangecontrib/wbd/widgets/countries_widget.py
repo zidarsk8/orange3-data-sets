@@ -5,6 +5,7 @@ any country.
 """
 
 import logging
+import time
 
 import simple_wbd
 from PyQt4 import QtGui
@@ -59,6 +60,7 @@ class CountriesWidget(QtGui.QWidget):
         self._executor.submit(self._task)
 
     def _fetch_countries_data(self):
+        time.sleep(1)  # bug if the list is loaded before the widget gets show.
         logger.debug("Fetch countries data")
         data = self.api.get_country_list()
         self.countries.table_widget.set_data(data)
