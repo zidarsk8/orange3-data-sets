@@ -76,7 +76,7 @@ class IndicatorAPI(widget.OWWidget):
 
         def get_text_setter(index):
             def text_setter(text):
-                logger.debug("Setting text on %s to %s", index, text)
+                logger.debug("Setting text toolbox item %s to %s", index, text)
                 self.toolbox.setItemText(index, text)
             return text_setter
 

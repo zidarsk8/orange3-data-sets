@@ -4,12 +4,14 @@ This widget should contain all filters needed to help the user find and select
 any indicator.
 """
 
+import logging
 
 from PyQt4 import QtGui
+import wbpy
 
 from orangecontrib.wbd.widgets import filter_table_widget
 
-import wbpy
+logger = logging.getLogger(__name__)
 
 
 class CountriesWidget(QtGui.QWidget):
@@ -18,6 +20,7 @@ class CountriesWidget(QtGui.QWidget):
 
     def __init__(self):
         super().__init__()
+        self.text_setter = None
 
         self.api = wbpy.IndicatorAPI()
         layout = QtGui.QGridLayout()
@@ -47,6 +50,11 @@ class CountriesWidget(QtGui.QWidget):
                                        self.selection_changed)
         self.countries.table_widget.selection_changed()
 
+    def set_title(self, title=""):
+        if callable(self.text_setter):
+            logger.debug("setting indicator widget title")
+            self.text_setter(self.TITLE_TEMPLATE.format(title))
+
     def togle_all_click(self):
         self.countries.table_widget.set_selected_data("")
 
@@ -57,7 +65,6 @@ class CountriesWidget(QtGui.QWidget):
         self.countries.table_widget.set_selected_data("Aggregates (NA)")
 
     def selection_changed(self, selected_ids):
-        return
         if not selected_ids:
             self.set_title("All Countries")
         else:
