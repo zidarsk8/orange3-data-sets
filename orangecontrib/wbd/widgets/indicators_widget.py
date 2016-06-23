@@ -53,9 +53,10 @@ class IndicatorAPI(widget.OWWidget):
         self.indicators = indicators_list_widget.IndicatorsListWidget()
         self.timeframe = timeframe_widget.TimeFrameWidget()
 
-        self.toolbox.addItem(self.indicators, "indicators")
-        self.toolbox.addItem(self.countries, "countries")
-        self.toolbox.addItem(self.timeframe, "time frame")
+        self._add_toolbox_item(self.indicators, "indicators")
+        self._add_toolbox_item(self.countries, "countries")
+        self._add_toolbox_item(self.timeframe, "time frame")
+
         layout.addWidget(self.toolbox)
         layout.addWidget(self.button)
         layout.setAlignment(QtCore.Qt.AlignTop)
@@ -69,6 +70,20 @@ class IndicatorAPI(widget.OWWidget):
         self._executor.submit(self._task)
 
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
+
+    def _add_toolbox_item(self, item, name):
+        logger.debug("adding item number: %s", self.toolbox.count())
+
+        def get_text_setter(index):
+            def text_setter(text):
+                logger.debug("Setting text on %s to %s", index, text)
+                self.toolbox.setItemText(index, text)
+            return text_setter
+
+        item.text_setter = get_text_setter(self.toolbox.count())
+
+        self.toolbox.addItem(item, name)
+
 
     def _delay(self):
         logger.debug("delay start")
