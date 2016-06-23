@@ -7,7 +7,7 @@ any indicator.
 import logging
 
 from PyQt4 import QtGui
-import wbpy
+import simple_wbd
 
 from orangecontrib.wbd.widgets import filter_table_widget
 
@@ -22,7 +22,7 @@ class CountriesWidget(QtGui.QWidget):
         super().__init__()
         self.text_setter = None
 
-        self.api = wbpy.IndicatorAPI()
+        self.api = simple_wbd.IndicatorAPI()
         layout = QtGui.QGridLayout()
 
         toggle_label = QtGui.QLabel("Toggle selection: ")
@@ -35,6 +35,7 @@ class CountriesWidget(QtGui.QWidget):
         toggle_aggregates.clicked.connect(self.togle_aggregates_click)
 
         self.countries = filter_table_widget.FilterTableWidget(
+            data=self.api.get_country_list(),
             multi_select=True,
         )
 
