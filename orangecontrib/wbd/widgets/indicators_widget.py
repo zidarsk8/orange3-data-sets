@@ -18,7 +18,7 @@ from Orange.widgets import gui
 
 from orangecontrib.wbd.widgets import indicators_list
 from orangecontrib.wbd.widgets import countries_list
-from orangecontrib.wbd.widgets import timeframe
+# from orangecontrib.wbd.widgets import timeframe
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +52,11 @@ class IndicatorAPI(widget.OWWidget):
 
         self.countries = countries_list.CountriesList()
         self.indicators = indicators_list.IndicatorsListWidget()
-        self.timeframe = timeframe.TimeFrameWidget()
+        # self.timeframe = timeframe.TimeFrameWidget()
 
         self._add_toolbox_item(self.indicators, "indicators")
         self._add_toolbox_item(self.countries, "countries")
-        self._add_toolbox_item(self.timeframe, "time frame")
+        # self._add_toolbox_item(self.timeframe, "time frame")
 
         layout.addWidget(self.toolbox)
         layout.addWidget(self.button)
@@ -108,7 +108,11 @@ class IndicatorAPI(widget.OWWidget):
             first_column = Orange.data.DiscreteVariable(
                 "Country", values=countries)
 
-        logger.debug("Sending %s data rows.", len(data))
+        logger.debug(
+            "Sending %s data rows and %s columns.",
+            len(data),
+            len(data[0]) if data else 0,
+        )
         domain_columns = [first_column] + [
             Orange.data.ContinuousVariable(column_name)
             for column_name in data[0][1:]
