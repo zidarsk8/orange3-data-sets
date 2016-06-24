@@ -32,21 +32,20 @@ KEYWORDS = (
 if __name__ == '__main__':
     setup(
         name="World Bank Data",
-        packages=['orangecontrib',
-                  'orangecontrib.wbd',
-                  'orangecontrib.wbd.tutorials',
-                  'orangecontrib.wbd.widgets'],
+        packages=[
+            'simple_wbd',
+            'orangecontrib',
+            'orangecontrib.wbd',
+            'orangecontrib.wbd.tutorials',
+            'orangecontrib.wbd.widgets'
+        ],
         package_data={
             'orangecontrib.wbd': ['tutorials/*.ows'],
             'orangecontrib.wbd.widgets': ['icons/*'],
         },
         install_requires=[
             'observable',
-            "simple_wbd",
-        ],
-        dependency_links=[
-            "http://github.com/zidarsk8/simple_wbd/tarball/master"
-            "#egg=simple_wbd-0.1.0dev"
+            'pycountry',
         ],
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
