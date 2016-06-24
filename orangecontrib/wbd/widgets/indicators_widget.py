@@ -15,6 +15,7 @@ from PyQt4 import QtCore
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
+from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.widgets import indicators_list
 from orangecontrib.wbd.widgets import countries_list
@@ -39,6 +40,7 @@ class IndicatorAPI(widget.OWWidget):
     def __init__(self):
         super().__init__()
         logger.debug("Initializing {}".format(self.__class__.__name__))
+        self.dataset_params = None
         self._init_layout()
 
     def _init_layout(self):
@@ -85,14 +87,33 @@ class IndicatorAPI(widget.OWWidget):
         query.
         """
         logger.debug("Fetch indicator data")
-        indicators = self.indicators.get_indicators()
-        countries = self.countries.get_counries()
+        self.dataset_params = [
+            self.indicators.get_indicators(),
+            self.countries.get_counries(),
+        ]
+        logger.debug("dataset parameters: %s", self.dataset_params)
+        self._executor = concurrent.ThreadExecutor(
+            threadPool=QtCore.QThreadPool(maxThreadCount=2)
+        )
+        self._task = concurrent.Task(function=self._fetch_dataset)
+        self._task.resultReady.connect(self._fetch_dataset_completed)
+        self._task.exceptionReady.connect(self._fetch_dataset_exception)
+        self._executor.submit(self._task)
 
-        logger.debug(indicators)
-        logger.debug(countries)
-        dataset = self.api.get_dataset(indicators, countries=countries)
-        data_list = dataset.as_list()
-        self.send_data(data_list)
+    def _fetch_dataset(self):
+        """Background thread handler for fetching data from the api."""
+        logger.debug("Fetch dataset data")
+        self.dataset = self.api.get_dataset(*self.dataset_params)
+
+    def _fetch_dataset_exception(self):
+        logger.error("Failed to load dataset.")
+
+    def _fetch_dataset_completed(self):
+        """Handler for successfully completed fetch request."""
+        logger.debug("Fetch dataset completed.")
+        if self.dataset:
+            data_list = self.dataset.as_list()
+            self.send_data(data_list)
 
     def data_updated(self, data_list):
         self.send_data(data_list)
