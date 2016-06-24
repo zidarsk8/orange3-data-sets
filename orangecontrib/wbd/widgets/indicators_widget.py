@@ -49,8 +49,8 @@ class IndicatorAPI(widget.OWWidget):
         layout = QtGui.QVBoxLayout()
 
         self.toolbox = QtGui.QToolBox()
-        self.button = QtGui.QPushButton("Fetch Data")
-        self.button.clicked.connect(self.fetch_button_clicked)
+        self.fetch_button = QtGui.QPushButton("Fetch Data")
+        self.fetch_button.clicked.connect(self.fetch_button_clicked)
 
         self.countries = countries_list.CountriesList()
         self.indicators = indicators_list.IndicatorsListWidget()
@@ -61,7 +61,7 @@ class IndicatorAPI(widget.OWWidget):
         # self._add_toolbox_item(self.timeframe, "time frame")
 
         layout.addWidget(self.toolbox)
-        layout.addWidget(self.button)
+        layout.addWidget(self.fetch_button)
         layout.setAlignment(QtCore.Qt.AlignTop)
 
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
@@ -86,6 +86,7 @@ class IndicatorAPI(widget.OWWidget):
         indicator, countries and dates have been properly set for a valid
         query.
         """
+        self.fetch_button.setEnabled(False)
         logger.debug("Fetch indicator data")
         self.dataset_params = [
             self.indicators.get_indicators(),
@@ -107,6 +108,7 @@ class IndicatorAPI(widget.OWWidget):
 
     def _fetch_dataset_exception(self):
         logger.error("Failed to load dataset.")
+        self.fetch_button.setEnabled(True)
 
     def _fetch_dataset_completed(self):
         """Handler for successfully completed fetch request."""
@@ -114,6 +116,7 @@ class IndicatorAPI(widget.OWWidget):
         if self.dataset:
             data_list = self.dataset.as_list()
             self.send_data(data_list)
+        self.fetch_button.setEnabled(True)
 
     def data_updated(self, data_list):
         self.send_data(data_list)
