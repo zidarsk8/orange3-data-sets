@@ -41,7 +41,12 @@ if __name__ == '__main__':
             'orangecontrib.wbd.widgets': ['icons/*'],
         },
         install_requires=[
-            'observable'
+            'observable',
+            "simple_wbd",
+        ],
+        dependency_links=[
+            "http://github.com/zidarsk8/simple_wbd/tarball/master"
+            "#egg=simple_wbd-0.1.0dev"
         ],
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,

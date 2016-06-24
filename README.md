@@ -13,9 +13,13 @@ register it with Orange and add a new workflow with this widget to example tutor
 Installation
 ------------
 
-To install the add-on, run
+To install the add-on using pip just run
 
-    python setup.py install
+    pip install --process-dependency-links -e .
+
+or install with setup.py
+
+    python setup.py install 
 
 To register this add-on with Orange, but keep the code in the development directory (do not copy it to 
 Python's site-packages directory), run
