@@ -31,7 +31,7 @@ class IndicatorAPI(widget.OWWidget):
     # and not shown in the menu.
     name = "Indicator API"
     icon = "icons/wb_icon.png"
-    category = "Data"
+    category = "Data Sets"
     want_main_area = False
     outputs = [widget.OutputSignal(
         "Data", table.Table,

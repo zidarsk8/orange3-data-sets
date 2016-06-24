@@ -15,7 +15,7 @@ ENTRY_POINTS = {
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
         #    orangecontrib/wbd/widgets/__init__.py
-        'Data = orangecontrib.wbd.widgets',
+        'Data Sets = orangecontrib.wbd.widgets',
     ),
 
     # Register widget help
