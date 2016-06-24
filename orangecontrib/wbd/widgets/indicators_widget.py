@@ -87,12 +87,11 @@ class IndicatorAPI(widget.OWWidget):
         logger.debug("Fetch indicator data")
         indicators = self.indicators.get_indicators()
         countries = self.countries.get_counries()
-        timeframe = self.timeframe.get_timeframe()
 
         logger.debug(indicators)
         logger.debug(countries)
         dataset = self.api.get_dataset(indicators, countries=countries)
-        data_list = dataset.as_list(use_datetime=True)
+        data_list = dataset.as_list()
         self.send_data(data_list)
 
     def data_updated(self, data_list):
@@ -105,7 +104,9 @@ class IndicatorAPI(widget.OWWidget):
             for row in data[1:]:
                 row[0] = first_column.parse(row[0].isoformat())
         elif data[0][0] == "Country":
-            first_column = Orange.data.StringVariable("Country")
+            countries = [row[0] for row in data[1:]]
+            first_column = Orange.data.DiscreteVariable(
+                "Country", values=countries)
 
         logger.debug("Sending %s data rows.", len(data))
         domain_columns = [first_column] + [
