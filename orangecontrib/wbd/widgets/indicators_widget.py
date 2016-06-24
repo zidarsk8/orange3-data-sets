@@ -28,8 +28,8 @@ class IndicatorAPI(widget.OWWidget):
 
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "World Bank Data"
-    icon = "icons/mywidget.svg"
+    name = "Indicator API"
+    icon = "icons/wb_icon.png"
     category = "Data"
     want_main_area = False
     outputs = [widget.OutputSignal(
