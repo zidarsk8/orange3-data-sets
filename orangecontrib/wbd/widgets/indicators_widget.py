@@ -17,9 +17,8 @@ from Orange.widgets import widget
 from Orange.widgets import gui
 from Orange.widgets.utils import concurrent
 
-from orangecontrib.wbd.widgets import indicators_list
-from orangecontrib.wbd.widgets import countries_list
-# from orangecontrib.wbd.widgets import timeframe
+from orangecontrib.wbd import indicators_list
+from orangecontrib.wbd import countries_list
 
 logger = logging.getLogger(__name__)
 

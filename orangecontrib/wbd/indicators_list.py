@@ -4,7 +4,6 @@ This widget should contain all filters needed to help the user find and select
 any indicator.
 """
 
-import time
 import logging
 
 import simple_wbd
@@ -12,7 +11,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.widgets.utils import concurrent
 
-from orangecontrib.wbd.widgets import filter_table
+from orangecontrib.wbd import filter_table
 
 logger = logging.getLogger(__name__)
 

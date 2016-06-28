@@ -6,8 +6,8 @@ import collections
 import observable
 from PyQt4 import QtGui
 
-from orangecontrib.wbd.widgets import simple_filter
-from orangecontrib.wbd.widgets import benchmark
+from orangecontrib.wbd import simple_filter
+from orangecontrib.wbd import benchmark
 
 logger = logging.getLogger(__name__)
 
