@@ -33,7 +33,6 @@ if __name__ == '__main__':
     setup(
         name="World Bank Data",
         packages=[
-            'simple_wbd',
             'orangecontrib',
             'orangecontrib.wbd',
             'orangecontrib.wbd.tutorials',
