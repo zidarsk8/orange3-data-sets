@@ -29,9 +29,25 @@ KEYWORDS = (
     'orange3 add-on',
 )
 
+
+def get_description():
+    with open("README.md") as f:
+        return f.read()
+
+
 if __name__ == '__main__':
     setup(
         name="World Bank Data",
+        version="0.2.0",
+        license="MIT",
+        author="Miha Zidar",
+        author_email="zidarsk8@gmail.com",
+        description=("A simple python interface for World Bank Data Indicator "
+                     "and Climate APIs"),
+        long_description=get_description(),
+        url="https://github.com/zidarsk8/world_bank_data",
+        download_url=("https://github.com/zidarsk8/world_bank_data/tarball/"
+                      "0.2.0"),
         packages=[
             'orangecontrib',
             'orangecontrib.wbd',
