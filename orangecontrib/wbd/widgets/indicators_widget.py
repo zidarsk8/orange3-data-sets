@@ -8,8 +8,6 @@ import sys
 import signal
 import logging
 
-import simple_wbd
-import Orange
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
@@ -19,6 +17,7 @@ from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd import indicators_list
 from orangecontrib.wbd import countries_list
+from orangecontrib.wbd import api_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +43,13 @@ class IndicatorAPI(widget.OWWidget):
 
     def _init_layout(self):
         """Initialize widget layout."""
-        self.api = simple_wbd.IndicatorAPI()
+        self.api = api_wrapper.IndicatorAPI()
         layout = QtGui.QVBoxLayout()
 
         self.toolbox = QtGui.QToolBox()
         self.fetch_button = QtGui.QPushButton("Fetch Data")
         self.fetch_button.clicked.connect(self.fetch_button_clicked)
+        self.timeseries = QtGui.QCheckBox("As timeseries")
 
         self.countries = countries_list.CountriesList()
         self.indicators = indicators_list.IndicatorsListWidget()
@@ -61,6 +61,7 @@ class IndicatorAPI(widget.OWWidget):
 
         layout.addWidget(self.toolbox)
         layout.addWidget(self.fetch_button)
+        layout.addWidget(self.timeseries)
         layout.setAlignment(QtCore.Qt.AlignTop)
 
         gui.widgetBox(self.controlArea, margin=0, orientation=layout)
@@ -113,36 +114,14 @@ class IndicatorAPI(widget.OWWidget):
         """Handler for successfully completed fetch request."""
         logger.debug("Fetch dataset completed.")
         if self.dataset:
-            data_list = self.dataset.as_list()
+            logger.debug("Generating orange, timeseries (%s)",
+                         self.timeseries.isChecked())
+            data_list = self.dataset.as_orange_table(
+                timeseries=self.timeseries.isChecked())
             self.send_data(data_list)
         self.fetch_button.setEnabled(True)
 
-    def data_updated(self, data_list):
-        self.send_data(data_list)
-
     def send_data(self, data):
-
-        if data[0][0] == "Date":
-            first_column = Orange.data.TimeVariable("Date")
-            for row in data[1:]:
-                row[0] = first_column.parse(row[0].isoformat())
-        elif data[0][0] == "Country":
-            countries = [row[0] for row in data[1:]]
-            first_column = Orange.data.DiscreteVariable(
-                "Country", values=countries)
-
-        logger.debug(
-            "Sending %s data rows and %s columns.",
-            len(data),
-            len(data[0]) if data else 0,
-        )
-        domain_columns = [first_column] + [
-            Orange.data.ContinuousVariable(column_name)
-            for column_name in data[0][1:]
-        ]
-
-        domain = Orange.data.Domain(domain_columns)
-        data = Orange.data.Table(domain, data[1:])
         self.send("Data", data)
 
     def keyPressEvent(self, event):
