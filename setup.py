@@ -46,6 +46,12 @@ if __name__ == '__main__':
             'observable',
             'simple_wbd',
         ],
+        extras_require={
+            'doc': [
+                'sphinx',
+                'sphinx_rtd_theme',
+            ],
+        },
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
         namespace_packages=['orangecontrib'],
