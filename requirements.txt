@@ -1,11 +1,15 @@
-pip
-setuptools
-numpy
-scipy
-scikit-learn
-mock
+# package requirements
 observable
+simple_wbd
+
+# development requirements
+mock
 nose
 nose-cov
+numpy
 pylint
-https://github.com/zidarsk8/simple_wbd/tarball/master#egg=simple_wbd
+scikit-learn
+scipy
+setuptools
+sphinx
+sphinx_rtd_theme
