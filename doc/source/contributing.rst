@@ -4,13 +4,14 @@ Contributing
 Setting up dev environment
 ==========================
 
-some section text
+See installation from source and also install the optional requirements file.
 
 
 Testing
 =======
 
 All code must be tested with unit or integration tests.
+
 
 Lint
 ====
