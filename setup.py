@@ -33,7 +33,6 @@ if __name__ == '__main__':
     setup(
         name="World Bank Data",
         packages=[
-            'simple_wbd',
             'orangecontrib',
             'orangecontrib.wbd',
             'orangecontrib.wbd.tutorials',
@@ -45,7 +44,7 @@ if __name__ == '__main__':
         },
         install_requires=[
             'observable',
-            'pycountry',
+            'simple_wbd',
         ],
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
