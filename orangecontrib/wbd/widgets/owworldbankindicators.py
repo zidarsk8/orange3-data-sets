@@ -188,64 +188,6 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         https://datahelpdesk.worldbank.org/knowledgebase/articles/898614-api-aggregates-regions-and-income-levels
     Groups were taken from:
         https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
-
-
-    Aggregates:
-
-        Income Levels:
-            2   Low income  LIC
-            3   Middle income   MIC
-            4   - Lower middle income   LMC
-            5   - Upper middle income   UMC
-            13  High income HIC
-
-        Regions:
-            20  East Asia & Pacific (all income levels) EAS
-            21  Europe & Central Asia (all income levels)   ECS
-            30  Latin America & Caribbean (all income levels)   LCN
-            32  Middle East & North Africa (all income levels)  MEA
-            33  North America   NAC
-            11  South Asia    SAS
-            39  Sub-Saharan Africa (all income levels)  SSF
-
-        Other:
-
-            1   World   WLD
-            17  Africa  AFR
-            18  Arab World  ARB
-
-            6   Low & middle income - LMY
-                  All low and middle income regions LMV
-            7     East Asia & Pacific (developing only) EAP
-            8     Europe & Central Asia (developing only)   ECA
-            9     Latin America & Caribbean (developing only)   LAC
-            10    Middle East & North Africa (developing only)  MNA
-            12    Sub-Saharan Africa (developing only)  SSA
-
-            13  High income - HIC
-            14    Euro area EMU
-            15    High income: OECD OEC
-            16    High income: nonOECD  NOC
-
-            19  Central Europe and the Baltics  CEB
-            22  European Union  EUU
-            23  Fragile and conflict affected situations    FCS
-            24  Heavily indebted poor countries (HIPC)  HPC
-            25  IBRD only   IBD
-            26  IDA & IBRD total    IBT
-            28  IDA blend   IDB
-            29  IDA only    IDX
-            27  IDA total   IDA
-            31  Least developed countries: UN classification    LDC
-            34  OECD members    OED
-            35  Small states    - SST
-                  All small states SST
-            36    Caribbean small states    CSS
-            37    Pacific island small states   PSS
-            38    Other small states    OSS
-
-    Countries:
-        # list of all countries
     """
 
     _country_selector = [
@@ -326,13 +268,9 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
     def _item_expanded(self, item):
         self._selection_list[("collapsed", item.key)] = False
-        print("expanded", item)
-        pass
 
     def _item_collapsed(self, item):
-        print("collapsed", item)
         self._selection_list[("collapsed", item.key)] = True
-        pass
 
     def _init_view(self):
         self.setHeaderLabels(["Regions and countries", "Code"])
