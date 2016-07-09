@@ -220,11 +220,9 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             8     Europe & Central Asia (developing only)   ECA
             9     Latin America & Caribbean (developing only)   LAC
             10    Middle East & North Africa (developing only)  MNA
-            11    South Asia    SAS
             12    Sub-Saharan Africa (developing only)  SSA
 
             13  High income - HIC
-                  All high income Regions HIC
             14    Euro area EMU
             15    High income: OECD OEC
             16    High income: nonOECD  NOC
@@ -283,12 +281,10 @@ class CountryTreeWidget(QtGui.QTreeWidget):
                     ("Europe & Central Asia (developing only)", "ECA"),
                     ("Latin America & Caribbean (developing only)", "LAC"),
                     ("Middle East & North Africa (developing only)", "MNA"),
-                    ("South Asia", "SAS"),
                     ("Sub-Saharan Africa (developing only)", "SSA"),
                 ]),
 
                 ("High income", [
-                    ("All high income Regions", "HIC"),
                     ("Euro area", "EMU"),
                     ("High income: OECD", "OEC"),
                     ("High income: nonOECD", "NOC"),
