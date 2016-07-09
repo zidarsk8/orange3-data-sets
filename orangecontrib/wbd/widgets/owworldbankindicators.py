@@ -318,6 +318,18 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
     def _init_listeners(self):
         self.itemChanged.connect(self.selection_changed)
+        self.itemCollapsed.connect(self._item_collapsed)
+        self.itemExpanded.connect(self._item_expanded)
+
+    def _item_expanded(self, item):
+        self._selection_list[("collapsed", item.key)] = False
+        print("expanded", item)
+        pass
+
+    def _item_collapsed(self, item):
+        print("collapsed", item)
+        self._selection_list[("collapsed", item.key)] = True
+        pass
 
     def _init_view(self):
         self.setHeaderLabels(["Regions and countries", "Code"])
@@ -345,12 +357,33 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             if isinstance(value, dict):
                 self._fill_values(value, item)
 
+    def _collapse_items(self, root=None):
+        """Collapse items that were marked as collapsed in previous sessions.
+
+        Args:
+            root: Item whose children we want to check and collapse. If none is
+                set, root item is chosen and we iterate through all top level
+                items.
+        """
+        if root is None:
+            root = self.invisibleRootItem()
+        child_count = root.childCount()
+        for i in range(child_count):
+            item = root.child(i)
+            if not item.childCount():
+                continue
+            if self._selection_list.get(("collapsed", item.key)):
+                item.setExpanded(False)
+            self._collapse_items(item)
+
     def _set_data(self):
         self._annotationsUpdating = True
         self.clear()
         self._fill_values(self._country_selector)
 
         self.expandAll()
+        self._collapse_items()
+
         for i in range(self.columnCount()):
             self.resizeColumnToContents(i)
         self._annotationsUpdating = False
