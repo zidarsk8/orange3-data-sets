@@ -326,13 +326,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
     def selection_changed(self, item, column):
         if self._busy:
             return
-        for i in range(self.topLevelItemCount()):
-            item = self.topLevelItem(i)
-            self._selection_list[item.key] = item.checkState(0)
-            for j in range(item.childCount()):
-                child = item.child(j)
-                self._selection_list[child.key] = child.checkState(0)
-        print(self._selection_list)
+        self._selection_list[item.key] = item.checkState(0)
 
     def _fill_values(self, data, parent=None):
         if not parent:
@@ -341,52 +335,20 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
         defaults = self._selection_list
         for name, value in data.items():
-            key = value if isinstance(value, str) else ""
+            display_key = value if isinstance(value, str) else ""
 
-            item = QtGui.QTreeWidgetItem(self, [name, key])
+            item = QtGui.QTreeWidgetItem(parent, [name, display_key])
             item.setFlags(item.flags() | tristate)
+            item.key = value if isinstance(value, str) else name
 
-            if isinstance(value, str):
-                item.setCheckState(0, defaults.get(key, QtCore.Qt.Checked))
-                item.key = key
-            else:
+            item.setCheckState(0, defaults.get(item.key, QtCore.Qt.Checked))
+            if isinstance(value, dict):
                 self._fill_values(value, item)
-
 
     def _set_data(self):
         self._annotationsUpdating = True
         self.clear()
-        key = "aa"
-        item = QtGui.QTreeWidgetItem(self, ["something"])
-        tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
-        item.setFlags(item.flags() | tristate)
-        item.setCheckState(
-            0, self._selection_list.get(key, QtCore.Qt.Checked))
-        item.key = key
-
-        key = "sub 1"
-        subitem = QtGui.QTreeWidgetItem(item, ["sub something 1"])
-        subitem.setFlags(subitem.flags() | QtCore.Qt.ItemIsUserCheckable)
-        subitem.setCheckState(
-            0, self._selection_list.get(key, QtCore.Qt.Checked)
-        )
-        subitem.key = key
-
-        key = "sub 2"
-        subitem = QtGui.QTreeWidgetItem(item, ["sub something"])
-        subitem.setFlags(subitem.flags() | QtCore.Qt.ItemIsUserCheckable)
-        subitem.setCheckState(
-            0, self._selection_list.get(key, QtCore.Qt.Checked)
-        )
-        subitem.key = key
-
-        key = "sub sub 2"
-        subitem = QtGui.QTreeWidgetItem(subitem, ["sub sub something"])
-        subitem.setFlags(subitem.flags() | QtCore.Qt.ItemIsUserCheckable)
-        subitem.setCheckState(
-            0, self._selection_list.get(key, QtCore.Qt.Checked)
-        )
-        subitem.key = key
+        self._fill_values(self._country_selector)
 
         self.expandAll()
         for i in range(self.columnCount()):
