@@ -183,6 +183,13 @@ class OWWorldBankIndicators(widget.OWWidget):
 
 class CountryTreeWidget(QtGui.QTreeWidget):
     """Display a list of countries and their codes.
+
+    The aggregates list was taken from:
+        https://datahelpdesk.worldbank.org/knowledgebase/articles/898614-api-aggregates-regions-and-income-levels
+    Groups were taken from:
+        https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
+
+
     Aggregates:
 
         Income Levels:
@@ -243,70 +250,70 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         # list of all countries
     """
 
-    _country_selector = {
-        "Aggregates": {
+    _country_selector = [
+        ("Aggregates", [
 
-            "Income Levels": {
-                "Low income":  "LIC",
-                "Middle income": "MIC",
-                "Lower middle income": "LMC",
-                "Upper middle income": "UMC",
-                "High income": "HIC",
-            },
+            ("Income Levels", [
+                ("Low income", "LIC"),
+                ("Middle income", "MIC"),
+                ("Lower middle income", "LMC"),
+                ("Upper middle income", "UMC"),
+                ("High income", "HIC"),
+            ]),
 
-            "Regions": {
-                "East Asia & Pacific (all income levels)": "EAS",
-                "Europe & Central Asia (all income levels)": "ECS",
-                "Latin America & Caribbean (all income levels)": "LCN",
-                "Middle East & North Africa (all income levels)": "MEA",
-                "North America": "NAC",
-                "South Asia": "SAS",
-                "Sub-Saharan Africa (all income levels)": "SSF",
-            },
+            ("Regions", [
+                ("East Asia & Pacific (all income levels)", "EAS"),
+                ("Europe & Central Asia (all income levels)", "ECS"),
+                ("Latin America & Caribbean (all income levels)", "LCN"),
+                ("Middle East & North Africa (all income levels)", "MEA"),
+                ("North America", "NAC"),
+                ("South Asia", "SAS"),
+                ("Sub-Saharan Africa (all income levels)", "SSF"),
+            ]),
 
-            "Other": {
+            ("Other", [
 
-                "World": "WLD",
-                "Africa": "AFR",
-                "Arab World": "ARB",
+                ("World", "WLD"),
+                ("Africa", "AFR"),
+                ("Arab World", "ARB"),
 
-                "Low & middle income": {
-                    "All low and middle income regions": "LMV",
-                    "East Asia & Pacific (developing only)": "EAP",
-                    "Europe & Central Asia (developing only)": "ECA",
-                    "Latin America & Caribbean (developing only)": "LAC",
-                    "Middle East & North Africa (developing only)": "MNA",
-                    "South Asia": "SAS",
-                    "Sub-Saharan Africa (developing only)": "SSA",
-                },
+                ("Low & middle income", [
+                    ("All low and middle income regions", "LMV"),
+                    ("East Asia & Pacific (developing only)", "EAP"),
+                    ("Europe & Central Asia (developing only)", "ECA"),
+                    ("Latin America & Caribbean (developing only)", "LAC"),
+                    ("Middle East & North Africa (developing only)", "MNA"),
+                    ("South Asia", "SAS"),
+                    ("Sub-Saharan Africa (developing only)", "SSA"),
+                ]),
 
-                "High income": {
-                    "All high income Regions": "HIC",
-                    "Euro area": "EMU",
-                    "High income: OECD": "OEC",
-                    "High income: nonOECD": "NOC",
-                },
+                ("High income", [
+                    ("All high income Regions", "HIC"),
+                    ("Euro area", "EMU"),
+                    ("High income: OECD", "OEC"),
+                    ("High income: nonOECD", "NOC"),
+                ]),
 
-                "Central Europe and the Baltics": "CEB",
-                "European Union": "EUU",
-                "Fragile and conflict affected situations": "FCS",
-                "Heavily indebted poor countries (HIPC)": "HPC",
-                "IBRD only": "IBD",
-                "IDA & IBRD total": "IBT",
-                "IDA blend": "IDB",
-                "IDA only": "IDX",
-                "IDA total": "IDA",
-                "Least developed countries: UN classification": "LDC",
-                "OECD members": "OED",
-                "Small states": {
-                    "All small states": "SST",
-                    "Caribbean small states": "CSS",
-                    "Pacific island small states": "PSS",
-                    "Other small states": "OSS",
-                },
-            },
-        }
-    }
+                ("Central Europe and the Baltics", "CEB"),
+                ("European Union", "EUU"),
+                ("Fragile and conflict affected situations", "FCS"),
+                ("Heavily indebted poor countries (HIPC)", "HPC"),
+                ("IBRD only", "IBD"),
+                ("IDA & IBRD total", "IBT"),
+                ("IDA blend", "IDB"),
+                ("IDA only", "IDX"),
+                ("IDA total", "IDA"),
+                ("Least developed countries: UN classification", "LDC"),
+                ("OECD members", "OED"),
+                ("Small states", [
+                    ("All small states", "SST"),
+                    ("Caribbean small states", "CSS"),
+                    ("Pacific island small states", "PSS"),
+                    ("Other small states", "OSS"),
+                ]),
+            ]),
+        ]),
+    ]
 
     def __init__(self, parent, selection_list):
         super().__init__(parent)
@@ -346,7 +353,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
         defaults = self._selection_list
-        for name, value in data.items():
+        for name, value in data:
             display_key = value if isinstance(value, str) else ""
 
             item = QtGui.QTreeWidgetItem(parent, [name, display_key])
@@ -354,7 +361,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             item.key = value if isinstance(value, str) else name
 
             item.setCheckState(0, defaults.get(item.key, QtCore.Qt.Checked))
-            if isinstance(value, dict):
+            if isinstance(value, list):
                 self._fill_values(value, item)
 
     def _collapse_items(self, root=None):
