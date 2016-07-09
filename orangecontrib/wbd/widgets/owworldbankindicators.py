@@ -129,10 +129,11 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.country_tree = CountryTreeWidget(box, self.country_selection)
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
+
         self.splitters = splitter, splitterH
 
         for sp, setting in zip(self.splitters, self.splitterSettings):
-            sp.splitterMoved.connect(self.splitterMoved)
+            sp.splitterMoved.connect(self._splitter_moved)
             sp.restoreState(setting)
 
         # self.resize(2000, 600)  # why does this not work
@@ -170,15 +171,14 @@ class OWWorldBankIndicators(widget.OWWidget):
     def radio_selected(self):
         pass
 
-    def splitterMoved(self, *args):
+    def _splitter_moved(self, *args):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
     def get_gds_model(self, progress=lambda val: None):
         import time
-        for i in range(1, 100):
-            time.sleep(0.01)
-            self._setProgress(i)
+        time.sleep(1)
+        return
 
 
 class CountryTreeWidget(QtGui.QTreeWidget):
