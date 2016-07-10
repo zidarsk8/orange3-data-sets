@@ -12,11 +12,6 @@ from functools import partial
 from functools import lru_cache
 
 
-from PyQt4.QtGui import (
-    QLineEdit, QCompleter, QSortFilterProxyModel, QSplitter,
-    QTreeView, QItemSelectionModel, QTreeWidget, QTreeWidgetItem,
-    QApplication, QStandardItemModel, QStandardItem, QStringListModel
-)
 from PyQt4.QtCore import Qt, QThread, QCoreApplication
 
 
@@ -34,10 +29,11 @@ from Orange.widgets.gui import LinkRole
 TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
 
+
 class MySortFilterProxyModel(QtGui.QSortFilterProxyModel):
 
     def __init__(self, parent=None):
-        QSortFilterProxyModel.__init__(self, parent)
+        QtGui.QSortFilterProxyModel.__init__(self, parent)
         self._filter_strings = []
         self._cache = {}
         self._cache_fixed = {}
@@ -55,7 +51,7 @@ class MySortFilterProxyModel(QtGui.QSortFilterProxyModel):
         self._cache_fixed = {}
         self._cache_prefix = {}
         self._row_text = {}
-        QSortFilterProxyModel.setSourceModel(self, model)
+        QtGui.QSortFilterProxyModel.setSourceModel(self, model)
 
     def addFilterFixedString(self, string, invalidate=True):
         """ Add `string` filter to the list of filters. If invalidate is
@@ -114,7 +110,7 @@ class MySortFilterProxyModel(QtGui.QSortFilterProxyModel):
     def setFilterFixedString(self, string):
         """Should this raise an error? It is not being used.
         """
-        QSortFilterProxyModel.setFilterFixedString(self, string)
+        QtGui.QSortFilterProxyModel.setFilterFixedString(self, string)
 
     def rowFilterText(self, row):
         """Return text for `row` to filter on.
@@ -139,7 +135,8 @@ class MySortFilterProxyModel(QtGui.QSortFilterProxyModel):
                 return int(left_gds) < int(right_gds)
             except ValueError:
                 pass
-        return QSortFilterProxyModel.lessThan(self, left, right)
+        return QtGui.QSortFilterProxyModel.lessThan(self, left, right)
+
 
 class OWWorldBankIndicators(widget.OWWidget):
     """World bank data widget for Orange."""
@@ -222,25 +219,11 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.mainArea.layout().addWidget(self.filter_text)
         self.mainArea.layout().addWidget(splitter)
 
-        self.treeWidget = QtGui.QTreeView(splitter)
-        self.treeWidget.setAlternatingRowColors(True)
-        self.treeWidget.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
-        self.treeWidget.setRootIsDecorated(False)
-        self.treeWidget.setSortingEnabled(True)
-        self.treeWidget.setUniformRowHeights(True)
-        self.treeWidget.viewport().setMouseTracking(True)
+        self.treeWidget = IndicatorsTreeView(splitter, main_widget=self)
 
         # linkdelegate = LinkStyledItemDelegate(self.treeWidget)
         # self.treeWidget.setItemDelegateForColumn(1, linkdelegate)
         # self.treeWidget.setItemDelegateForColumn(8, linkdelegate)
-
-        proxyModel = MySortFilterProxyModel(self.treeWidget)
-        self.treeWidget.setModel(proxyModel)
-        self.treeWidget.selectionModel().selectionChanged.connect(
-            self.updateSelection
-        )
-        self.treeWidget.viewport().setMouseTracking(True)
-
 
         splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
 
@@ -262,47 +245,11 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         # self.resize(2000, 600)  # why does this not work
 
-        self.setBlocking(True)
-        self.setEnabled(False)
         self.progressBarInit()
-
-        self._executor = concurrent.ThreadExecutor()
-
-        func = partial(self._fetch_indicators,
-                       concurrent.methodinvoke(self, "_setProgress", (float,)))
-        self._fetch_task = concurrent.Task(function=func)
-        self._fetch_task.finished.connect(self._fetch_indicators_finished)
-        self._fetch_task.exceptionReady.connect(self._init_exception)
-
-        self._executor.submit(self._fetch_task)
 
     @QtCore.pyqtSlot(float)
     def _setProgress(self, value):
         self.progressBarValue = value
-
-    def _init_exception(self):
-        pass
-
-    def _fetch_indicators_finished(self):
-        assert self.thread() is QtCore.QThread.currentThread()
-        model = self._fetch_task.result()
-        model.setParent(self)
-
-        proxy = self.treeWidget.model()
-        proxy.setFilterKeyColumn(0)
-        proxy.setFilterRole(TextFilterRole)
-        proxy.setFilterCaseSensitivity(False)
-        # proxy.setFilterFixedString(self.filterString)
-
-        proxy.setSourceModel(model)
-        proxy.sort(0, QtCore.Qt.DescendingOrder)
-
-        self.progressBarFinished()
-        self.setBlocking(False)
-        self.setEnabled(True)
-
-    def updateSelection(self):
-        pass
 
     def filter_indicator_list(self):
         pass
@@ -314,22 +261,92 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
+
+class IndicatorsTreeView(QtGui.QTreeView):
+
+    def __init__(self, parent, main_widget=None):
+        super().__init__(parent)
+        self._main_widget = main_widget
+        self.setAlternatingRowColors(True)
+        self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
+        self.setRootIsDecorated(False)
+        self.setSortingEnabled(True)
+        self.setUniformRowHeights(True)
+        self.viewport().setMouseTracking(True)
+
+        proxyModel = MySortFilterProxyModel(self)
+        self.setModel(proxyModel)
+        self.selectionModel().selectionChanged.connect(
+            self.updateSelection
+        )
+        self.viewport().setMouseTracking(True)
+
+        self._executor = concurrent.ThreadExecutor()
+
+        func = partial(self._fetch_indicators,
+                       concurrent.methodinvoke(self, "_setProgress", (float,)))
+        self._fetch_task = concurrent.Task(function=func)
+        self._fetch_task.finished.connect(self._fetch_indicators_finished)
+        self._fetch_task.exceptionReady.connect(self._init_exception)
+
+        self._main_widget.setBlocking(True)
+        self._main_widget.setEnabled(False)
+        self._executor.submit(self._fetch_task)
+
+    def updateSelection(self):
+        pass
+
     def _fetch_indicators(self, progress=lambda val: None):
+
         def item(displayvalue, item_values={}):
-            item = QStandardItem()
+            item = QtGui.QStandardItem()
             item.setData(displayvalue, Qt.DisplayRole)
-            item.setData("https"+displayvalue, LinkRole)
+            item.setData("https" + displayvalue, LinkRole)
             return item
 
-        model = QStandardItemModel()
+        model = QtGui.QStandardItemModel()
         model.setHorizontalHeaderLabels(["", "ID", "Title"])
-        model.appendRow([item(""), item("22"), item("25"), ])
-        model.appendRow([item(" "), item("24"), item("39"), ])
+        model.appendRow([item(""), item("item 1"), item("2"), ])
+        model.appendRow([item(" "), item("item 3 ua"), item(
+            "oauoe aotuhounotahunoa huoa nuthoea utoanhu oanehuoa"
+            "oauoe aotuhounotahunoa huoa nuthoea utoanhu oanehuoa"
+            "oauoe aotuhounotahunoa huoa nuthoea utoanhu oanehuoa"
+            "usaohu soatehu oanuhtao suhtoa suhoaesuthoasuntoehuso9"), ])
+        model.appendRow([item(""), item("some"), item("3"), ])
+        model.appendRow([item(" "), item("thing"), item("4 ouoeauaouoau"), ])
+        model.appendRow([item(" "), item("else 5"), item("7"), ])
+        model.appendRow([item(" "), item("else 5"), item("7"), ])
+        model.appendRow([item(" "), item("else 5"), item("7"), ])
+        model.appendRow([item(" "), item("else 5"), item("7"), ])
+        model.appendRow([item(" "), item("else 5"), item("7"), ])
+        model.appendRow([item(" "), item("else 5"), item("7"), ])
 
         if QThread.currentThread() is not QCoreApplication.instance().thread():
             model.moveToThread(QCoreApplication.instance().thread())
 
         return model
+
+    def _init_exception(self):
+        pass
+
+    def _fetch_indicators_finished(self):
+        assert self.thread() is QtCore.QThread.currentThread()
+        model = self._fetch_task.result()
+        model.setParent(self)
+
+        proxy = self.model()
+        proxy.setFilterKeyColumn(0)
+        proxy.setFilterRole(TextFilterRole)
+        proxy.setFilterCaseSensitivity(False)
+        # proxy.setFilterFixedString(self.filterString)
+
+        proxy.setSourceModel(model)
+        proxy.sort(1, QtCore.Qt.DescendingOrder)
+
+        # self.progressBarFinished()
+
+        self._main_widget.setBlocking(False)
+        self._main_widget.setEnabled(True)
 
 
 def main():  # pragma: no cover
