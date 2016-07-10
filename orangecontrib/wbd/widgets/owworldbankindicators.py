@@ -9,6 +9,17 @@ import signal
 import logging
 from functools import partial
 
+from functools import lru_cache
+
+
+from PyQt4.QtGui import (
+    QLineEdit, QCompleter, QSortFilterProxyModel, QSplitter,
+    QTreeView, QItemSelectionModel, QTreeWidget, QTreeWidgetItem,
+    QApplication, QStandardItemModel, QStandardItem, QStringListModel
+)
+from PyQt4.QtCore import Qt, QThread, QCoreApplication
+
+
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
@@ -18,10 +29,117 @@ from Orange.widgets.utils import concurrent
 
 from Orange.widgets.settings import Setting
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
-# from Orange.widgets.gui import LinkStyledItemDelegate, LinkRole
+from Orange.widgets.gui import LinkRole
 
+TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
 
+class MySortFilterProxyModel(QtGui.QSortFilterProxyModel):
+
+    def __init__(self, parent=None):
+        QSortFilterProxyModel.__init__(self, parent)
+        self._filter_strings = []
+        self._cache = {}
+        self._cache_fixed = {}
+        self._cache_prefix = {}
+        self._row_text = {}
+
+        # Create a cached version of _filteredRows
+        self._filteredRows = lru_cache(100)(self._filteredRows)
+
+    def setSourceModel(self, model):
+        """Set the source model for the filter.
+        """
+        self._filter_strings = []
+        self._cache = {}
+        self._cache_fixed = {}
+        self._cache_prefix = {}
+        self._row_text = {}
+        QSortFilterProxyModel.setSourceModel(self, model)
+
+    def addFilterFixedString(self, string, invalidate=True):
+        """ Add `string` filter to the list of filters. If invalidate is
+        True the filter cache will be recomputed.
+        """
+        self._filter_strings.append(string)
+        all_rows = range(self.sourceModel().rowCount())
+        row_text = [self.rowFilterText(row) for row in all_rows]
+        self._cache[string] = [string in text for text in row_text]
+        if invalidate:
+            self.updateCached()
+            self.invalidateFilter()
+
+    def removeFilterFixedString(self, index=-1, invalidate=True):
+        """ Remove the `index`-th filter string. If invalidate is True the
+        filter cache will be recomputed.
+        """
+        string = self._filter_strings.pop(index)
+        del self._cache[string]
+        if invalidate:
+            self.updateCached()
+            self.invalidate()
+
+    def setFilterFixedStrings(self, strings):
+        """Set a list of string to be the new filters.
+        """
+        to_remove = set(self._filter_strings) - set(strings)
+        to_add = set(strings) - set(self._filter_strings)
+        for str in to_remove:
+            self.removeFilterFixedString(
+                self._filter_strings.index(str),
+                invalidate=False)
+
+        for str in to_add:
+            self.addFilterFixedString(str, invalidate=False)
+        self.updateCached()
+        self.invalidate()
+
+    def _filteredRows(self, filter_strings):
+        """Return a dictionary mapping row indexes to True False values.
+
+        .. note:: This helper function is wrapped in the __init__ method.
+
+        """
+        all_rows = range(self.sourceModel().rowCount())
+        cache = self._cache
+        return dict([(row, all([cache[str][row] for str in filter_strings]))
+                     for row in all_rows])
+
+    def updateCached(self):
+        """Update the combined filter cache.
+        """
+        self._cache_fixed = self._filteredRows(
+            tuple(sorted(self._filter_strings)))
+
+    def setFilterFixedString(self, string):
+        """Should this raise an error? It is not being used.
+        """
+        QSortFilterProxyModel.setFilterFixedString(self, string)
+
+    def rowFilterText(self, row):
+        """Return text for `row` to filter on.
+        """
+        f_role = self.filterRole()
+        f_column = self.filterKeyColumn()
+        s_model = self.sourceModel()
+        data = s_model.data(s_model.index(row, f_column), f_role)
+        return str(data)
+
+    def filterAcceptsRow(self, row, parent):
+        return self._cache_fixed.get(row, True)
+
+    def lessThan(self, left, right):
+        # TODO: Remove fixed column handling
+        if left.column() == 1 and right.column():
+            left_gds = str(left.data(Qt.DisplayRole))
+            right_gds = str(right.data(Qt.DisplayRole))
+            left_gds = left_gds.lstrip("GDS")
+            right_gds = right_gds.lstrip("GDS")
+            try:
+                return int(left_gds) < int(right_gds)
+            except ValueError:
+                pass
+        return QSortFilterProxyModel.lessThan(self, left, right)
 
 class OWWorldBankIndicators(widget.OWWidget):
     """World bank data widget for Orange."""
@@ -65,9 +183,9 @@ class OWWorldBankIndicators(widget.OWWidget):
     def _init_layout(self):
         """Initialize widget layout."""
 
-        # GUI
+        # Control area
         info_box = gui.widgetBox(self.controlArea, "Info", addSpace=True)
-        self.infoBox = gui.widgetLabel(info_box, "Initializing\n\n")
+        self._info_label = gui.widgetLabel(info_box, "Initializing\n\n")
 
         info_box = gui.widgetBox(self.controlArea, "Indicators", addSpace=True)
         gui.radioButtonsInBox(info_box, self, "indicator_list",
@@ -76,35 +194,32 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         gui.separator(info_box)
 
-        info_box = gui.widgetBox(self.controlArea, "Output", addSpace=True)
-        gui.radioButtonsInBox(info_box, self, "output_type",
+        output_box = gui.widgetBox(self.controlArea, "Output", addSpace=True)
+        gui.radioButtonsInBox(output_box, self, "output_type",
                               ["Countries", "Time Series"], "Rows",
                               callback=self.indicator_list_selected)
 
-        gui.separator(info_box)
+        gui.separator(output_box)
 
-        info_box = gui.widgetBox(self.controlArea, "Commit", addSpace=True)
-        self.commitButton = gui.button(
-            info_box, self, "Commit", callback=self.commit)
-
-        # TODO: setStopper does not work.
-        # cb = gui.checkBox(info_box, self, "autoCommit",
-        #                    "Commit on any change")
-        # gui.setStopper(self, self.commitButton, cb, "selectionChanged",
-        #                self.commit)
+        gui.auto_commit(self.controlArea, self, "autoCommit", "Commit",
+                        box="Commit")
+        self.commitIf = self.commit
 
         gui.rubber(self.controlArea)
 
+        # Main area
+
         gui.widgetLabel(self.mainArea, "Filter")
-        self.filterLineEdit = QtGui.QLineEdit(
+        self.filter_text = QtGui.QLineEdit(
             textChanged=self.filter_indicator_list)
-        #  self.completer = QCompleter(caseSensitivity=Qt.CaseInsensitive)
-        #  self.completer.setModel(QStringListModel(self))
-        #  self.filterLineEdit.setCompleter(self.completer)
+        self.completer = QtGui.QCompleter(
+            caseSensitivity=QtCore.Qt.CaseInsensitive)
+        self.completer.setModel(QtGui.QStringListModel(self))
+        self.filter_text.setCompleter(self.completer)
 
         splitter = QtGui.QSplitter(QtCore.Qt.Vertical, self.mainArea)
 
-        self.mainArea.layout().addWidget(self.filterLineEdit)
+        self.mainArea.layout().addWidget(self.filter_text)
         self.mainArea.layout().addWidget(splitter)
 
         self.treeWidget = QtGui.QTreeView(splitter)
@@ -118,6 +233,14 @@ class OWWorldBankIndicators(widget.OWWidget):
         # linkdelegate = LinkStyledItemDelegate(self.treeWidget)
         # self.treeWidget.setItemDelegateForColumn(1, linkdelegate)
         # self.treeWidget.setItemDelegateForColumn(8, linkdelegate)
+
+        proxyModel = MySortFilterProxyModel(self.treeWidget)
+        self.treeWidget.setModel(proxyModel)
+        self.treeWidget.selectionModel().selectionChanged.connect(
+            self.updateSelection
+        )
+        self.treeWidget.viewport().setMouseTracking(True)
+
 
         splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
 
@@ -145,13 +268,13 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         self._executor = concurrent.ThreadExecutor()
 
-        func = partial(self.get_gds_model,
+        func = partial(self._fetch_indicators,
                        concurrent.methodinvoke(self, "_setProgress", (float,)))
-        self._inittask = concurrent.Task(function=func)
-        self._inittask.finished.connect(self._init_task_finished)
-        self._inittask.exceptionReady.connect(self._init_exception)
+        self._fetch_task = concurrent.Task(function=func)
+        self._fetch_task.finished.connect(self._fetch_indicators_finished)
+        self._fetch_task.exceptionReady.connect(self._init_exception)
 
-        self._executor.submit(self._inittask)
+        self._executor.submit(self._fetch_task)
 
     @QtCore.pyqtSlot(float)
     def _setProgress(self, value):
@@ -160,8 +283,26 @@ class OWWorldBankIndicators(widget.OWWidget):
     def _init_exception(self):
         pass
 
-    def _init_task_finished(self):
+    def _fetch_indicators_finished(self):
+        assert self.thread() is QtCore.QThread.currentThread()
+        model = self._fetch_task.result()
+        model.setParent(self)
+
+        proxy = self.treeWidget.model()
+        proxy.setFilterKeyColumn(0)
+        proxy.setFilterRole(TextFilterRole)
+        proxy.setFilterCaseSensitivity(False)
+        # proxy.setFilterFixedString(self.filterString)
+
+        proxy.setSourceModel(model)
+        proxy.sort(0, QtCore.Qt.DescendingOrder)
+
+        self.progressBarFinished()
+        self.setBlocking(False)
         self.setEnabled(True)
+
+    def updateSelection(self):
+        pass
 
     def filter_indicator_list(self):
         pass
@@ -169,17 +310,26 @@ class OWWorldBankIndicators(widget.OWWidget):
     def indicator_list_selected(self):
         pass
 
-    def radio_selected(self):
-        pass
-
     def _splitter_moved(self, *args):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
-    def get_gds_model(self, progress=lambda val: None):
-        import time
-        time.sleep(1)
-        return
+    def _fetch_indicators(self, progress=lambda val: None):
+        def item(displayvalue, item_values={}):
+            item = QStandardItem()
+            item.setData(displayvalue, Qt.DisplayRole)
+            item.setData("https"+displayvalue, LinkRole)
+            return item
+
+        model = QStandardItemModel()
+        model.setHorizontalHeaderLabels(["", "ID", "Title"])
+        model.appendRow([item(""), item("22"), item("25"), ])
+        model.appendRow([item(" "), item("24"), item("39"), ])
+
+        if QThread.currentThread() is not QCoreApplication.instance().thread():
+            model.moveToThread(QCoreApplication.instance().thread())
+
+        return model
 
 
 def main():  # pragma: no cover
