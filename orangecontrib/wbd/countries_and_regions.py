@@ -2,8 +2,10 @@
 
 import logging
 
+import simple_wbd
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+import collections
 
 logger = logging.getLogger(__name__)
 
@@ -17,69 +19,133 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
     """
 
-    _country_selector = [
+    _data_structure = [
         ("Aggregates", [
             ("Income Levels", [
-                ("Low income", "LIC"),
-                ("Middle income", "MIC"),
-                ("Lower middle income", "LMC"),
-                ("Upper middle income", "UMC"),
-                ("High income", "HIC"),
+                "LIC",  # "Low income"
+                "MIC",  # "Middle income",
+                "LMC",  # "Lower middle income",
+                "UMC",  # "Upper middle income",
+                "HIC",  # "High income",
             ]),
             ("Regions", [
-                ("East Asia & Pacific (all income levels)", "EAS"),
-                ("Europe & Central Asia (all income levels)", "ECS"),
-                ("Latin America & Caribbean (all income levels)", "LCN"),
-                ("Middle East & North Africa (all income levels)", "MEA"),
-                ("North America", "NAC"),
-                ("South Asia", "SAS"),
-                ("Sub-Saharan Africa (all income levels)", "SSF"),
+                "EAS",  # "East Asia & Pacific (all income levels)",
+                "ECS",  # "Europe & Central Asia (all income levels)",
+                "LCN",  # "Latin America & Caribbean (all income levels)",
+                "MEA",  # "Middle East & North Africa (all income levels)",
+                "NAC",  # "North America",
+                "SAS",  # "South Asia",
+                "SSF",  # "Sub-Saharan Africa (all income levels)",
             ]),
             ("Other", [
-                ("World", "WLD"),
-                ("Africa", "AFR"),
-                ("Arab World", "ARB"),
+                "WLD",  # "World",
+                "AFR",  # "Africa",
+                "ARB",  # "Arab World",
                 ("Low & middle income", [
-                    ("All low and middle income regions", "LMV"),
-                    ("East Asia & Pacific (developing only)", "EAP"),
-                    ("Europe & Central Asia (developing only)", "ECA"),
-                    ("Latin America & Caribbean (developing only)", "LAC"),
-                    ("Middle East & North Africa (developing only)", "MNA"),
-                    ("Sub-Saharan Africa (developing only)", "SSA"),
+                    "LMY",  # "All low and middle income regions",
+                    "EAP",  # "East Asia & Pacific (developing only)",
+                    "ECA",  # "Europe & Central Asia (developing only)",
+                    "LAC",  # "Latin America & Caribbean (developing only)",
+                    "MNA",  # "Middle East & North Africa (developing only)",
+                    "SSA",  # "Sub-Saharan Africa (developing only)",
                 ]),
                 ("High income", [
-                    ("Euro area", "EMU"),
-                    ("High income: OECD", "OEC"),
-                    ("High income: nonOECD", "NOC"),
+                    "EMU",  # "Euro area",
+                    "OEC",  # "High income: OECD",
+                    "NOC",  # "High income: nonOECD",
                 ]),
-                ("Central Europe and the Baltics", "CEB"),
-                ("European Union", "EUU"),
-                ("Fragile and conflict affected situations", "FCS"),
-                ("Heavily indebted poor countries (HIPC)", "HPC"),
-                ("IBRD only", "IBD"),
-                ("IDA & IBRD total", "IBT"),
-                ("IDA blend", "IDB"),
-                ("IDA only", "IDX"),
-                ("IDA total", "IDA"),
-                ("Least developed countries: UN classification", "LDC"),
-                ("OECD members", "OED"),
+                "CEB",  # "Central Europe and the Baltics",
+                "EUU",  # "European Union",
+                "FCS",  # "Fragile and conflict affected situations",
+                "HPC",  # "Heavily indebted poor countries (HIPC)",
+                "IBD",  # "IBRD only",
+                "IBT",  # "IDA & IBRD total",
+                "IDB",  # "IDA blend",
+                "IDX",  # "IDA only",
+                "IDA",  # "IDA total",
+                "LDC",  # "Least developed countries: UN classification",
+                "OED",  # "OECD members",
                 ("Small states", [
-                    ("All small states", "SST"),
-                    ("Caribbean small states", "CSS"),
-                    ("Pacific island small states", "PSS"),
-                    ("Other small states", "OSS"),
+                    "SST",  # "All small states",
+                    "CSS",  # "Caribbean small states",
+                    "PSS",  # "Pacific island small states",
+                    "OSS",  # "Other small states",
                 ]),
             ]),
         ]),
+        ("Countries", []),
     ]
 
     def __init__(self, parent, selection_list):
         super().__init__(parent)
         self._selection_list = selection_list
         self._busy = False
+        self._api = simple_wbd.IndicatorAPI()
         self._init_view()
-        self._set_data()
+        self._init_data()
         self._init_listeners()
+
+    def _init_data(self):
+        self._add_country_data()
+        self._set_data()
+
+    def _gather_used_ids(self, items=None):
+        if items is None:
+            items = self._data_structure
+        ids = set()
+        for item in items:
+            if isinstance(item, str):
+                ids.add(item)
+            else:
+                ids |= self._gather_used_ids(item[1])
+        return ids
+
+    def _add_missing_aggregates(self):
+        countries = self._api.get_countries()
+        aggregate_codes = set([
+            i.get("id") for i in countries
+            if i.get("region", {}).get("value") == "Aggregates"
+        ])
+        used_codes = self._gather_used_ids()
+        missing_aggregates = aggregate_codes.difference(used_codes)
+        for code in sorted(missing_aggregates):
+            # 0,1 = Aggregates, 2,1 = Other
+            self._data_structure[0][1][2][1].append(code)
+
+    def _add_missing_countries(self):
+        countries = self._api.get_countries()
+        country_codes = set([
+            i.get("id") for i in countries
+            if i.get("region", {}).get("value") != "Aggregates"
+        ])
+        for code in sorted(country_codes):
+            # 1 = Countries
+            self._data_structure[1][1].append(code)
+
+
+    def _generate_country_dict(self, data=None):
+        if not data:
+            data = self._data_structure
+        country_dict = collections.OrderedDict()
+
+        for item in data:
+            if isinstance(item, tuple):
+                country_dict[item[0]] = self._generate_country_dict(item[1])
+            elif item in self._country_map:
+                country_dict[item] = self._country_map[item]
+            else:
+                logger.info("Bad country item: %s", item)
+        return country_dict
+
+    def _generate_country_map(self):
+        countries = self._api.get_countries()
+        self._country_map = {c["id"]: c for c in countries}
+
+    def _add_country_data(self):
+        self._add_missing_aggregates()
+        self._add_missing_countries()
+        self._generate_country_map()
+        self._country_dict = self._generate_country_dict()
 
     def _init_listeners(self):
         self.itemChanged.connect(self.selection_changed)
@@ -107,15 +173,15 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
         defaults = self._selection_list
-        for name, value in data:
-            display_key = value if isinstance(value, str) else ""
+        for name, value in data.items():
+            display_key = value.get("name", "")
 
             item = QtGui.QTreeWidgetItem(parent, [name, display_key])
             item.setFlags(item.flags() | tristate)
             item.key = value if isinstance(value, str) else name
 
             item.setCheckState(0, defaults.get(item.key, QtCore.Qt.Checked))
-            if isinstance(value, list):
+            if isinstance(value, collections.OrderedDict):
                 self._fill_values(value, item)
 
     def _collapse_items(self, root=None):
@@ -140,7 +206,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
     def _set_data(self):
         self._busy = True
         self.clear()
-        self._fill_values(self._country_selector)
+        self._fill_values(self._country_dict)
 
         self.expandAll()
         self._collapse_items()
