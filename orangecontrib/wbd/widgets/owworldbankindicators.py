@@ -7,25 +7,16 @@ world bank data API.
 import sys
 import signal
 import logging
-from functools import partial
-
-from functools import lru_cache
-
-
-from PyQt4.QtCore import Qt, QThread, QCoreApplication
-
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
-from Orange.widgets.utils import concurrent
-
 from Orange.widgets.settings import Setting
+
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd.indicators_list import IndicatorsTreeView
-from Orange.widgets.gui import LinkRole
 
 TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
@@ -126,7 +117,8 @@ class OWWorldBankIndicators(widget.OWWidget):
         gui.rubber(box)
 
         box = gui.widgetBox(splitterH, "Sample Annotations")
-        self.country_tree = CountryTreeWidget(splitterH, self.country_selection)
+        self.country_tree = CountryTreeWidget(
+            splitterH, self.country_selection)
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
 
@@ -153,7 +145,6 @@ class OWWorldBankIndicators(widget.OWWidget):
     def _splitter_moved(self, *args):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
-
 
 
 def main():  # pragma: no cover
