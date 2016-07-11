@@ -24,7 +24,7 @@ from Orange.widgets.utils import concurrent
 
 from Orange.widgets.settings import Setting
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
-from orangecontrib.wbd.indicators_tree_view import IndicatorsTreeView
+from orangecontrib.wbd.indicators_list import IndicatorsTreeView
 from Orange.widgets.gui import LinkRole
 
 TextFilterRole = next(gui.OrangeUserRole)
@@ -126,7 +126,7 @@ class OWWorldBankIndicators(widget.OWWidget):
         gui.rubber(box)
 
         box = gui.widgetBox(splitterH, "Sample Annotations")
-        self.country_tree = CountryTreeWidget(box, self.country_selection)
+        self.country_tree = CountryTreeWidget(splitterH, self.country_selection)
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
 
