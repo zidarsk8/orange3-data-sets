@@ -19,7 +19,6 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
     _country_selector = [
         ("Aggregates", [
-
             ("Income Levels", [
                 ("Low income", "LIC"),
                 ("Middle income", "MIC"),
@@ -27,7 +26,6 @@ class CountryTreeWidget(QtGui.QTreeWidget):
                 ("Upper middle income", "UMC"),
                 ("High income", "HIC"),
             ]),
-
             ("Regions", [
                 ("East Asia & Pacific (all income levels)", "EAS"),
                 ("Europe & Central Asia (all income levels)", "ECS"),
@@ -37,13 +35,10 @@ class CountryTreeWidget(QtGui.QTreeWidget):
                 ("South Asia", "SAS"),
                 ("Sub-Saharan Africa (all income levels)", "SSF"),
             ]),
-
             ("Other", [
-
                 ("World", "WLD"),
                 ("Africa", "AFR"),
                 ("Arab World", "ARB"),
-
                 ("Low & middle income", [
                     ("All low and middle income regions", "LMV"),
                     ("East Asia & Pacific (developing only)", "EAP"),
@@ -52,13 +47,11 @@ class CountryTreeWidget(QtGui.QTreeWidget):
                     ("Middle East & North Africa (developing only)", "MNA"),
                     ("Sub-Saharan Africa (developing only)", "SSA"),
                 ]),
-
                 ("High income", [
                     ("Euro area", "EMU"),
                     ("High income: OECD", "OEC"),
                     ("High income: nonOECD", "NOC"),
                 ]),
-
                 ("Central Europe and the Baltics", "CEB"),
                 ("European Union", "EUU"),
                 ("Fragile and conflict affected situations", "FCS"),
@@ -83,10 +76,10 @@ class CountryTreeWidget(QtGui.QTreeWidget):
     def __init__(self, parent, selection_list):
         super().__init__(parent)
         self._selection_list = selection_list
+        self._busy = False
         self._init_view()
         self._set_data()
         self._init_listeners()
-        self._busy = False
 
     def _init_listeners(self):
         self.itemChanged.connect(self.selection_changed)
@@ -145,7 +138,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             self._collapse_items(item)
 
     def _set_data(self):
-        self._annotationsUpdating = True
+        self._busy = True
         self.clear()
         self._fill_values(self._country_selector)
 
@@ -154,4 +147,4 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
         for i in range(self.columnCount()):
             self.resizeColumnToContents(i)
-        self._annotationsUpdating = False
+        self._busy = False
