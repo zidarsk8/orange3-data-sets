@@ -134,7 +134,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             elif item in self._country_map:
                 country_dict[item] = self._country_map[item]
             else:
-                logger.info("Bad country item: %s", item)
+                logger.info("Missing country item: %s", item)
         return country_dict
 
     def _generate_country_map(self):
@@ -173,12 +173,13 @@ class CountryTreeWidget(QtGui.QTreeWidget):
 
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
         defaults = self._selection_list
-        for name, value in data.items():
-            display_key = value.get("name", "")
+        for key, value in data.items():
+            name = value.get("name", key)
+            display_key = "" if name == key else key
 
             item = QtGui.QTreeWidgetItem(parent, [name, display_key])
             item.setFlags(item.flags() | tristate)
-            item.key = value if isinstance(value, str) else name
+            item.key = value if isinstance(value, str) else key
 
             item.setCheckState(0, defaults.get(item.key, QtCore.Qt.Checked))
             if isinstance(value, collections.OrderedDict):
