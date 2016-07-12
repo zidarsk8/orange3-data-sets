@@ -1,17 +1,14 @@
 
 import logging
 from functools import partial
-
 from functools import lru_cache
 
+import simple_wbd
 from PyQt4.QtCore import Qt, QThread, QCoreApplication
-
-
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.widgets import gui
 from Orange.widgets.utils import concurrent
-
 from Orange.widgets.gui import LinkRole
 
 TextFilterRole = next(gui.OrangeUserRole)
@@ -131,6 +128,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
     def __init__(self, parent, main_widget=None):
         super().__init__(parent)
         self._main_widget = main_widget
+        self._api = simple_wbd.IndicatorAPI()
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
         self.setRootIsDecorated(False)
@@ -140,9 +138,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
 
         proxyModel = MySortFilterProxyModel(self)
         self.setModel(proxyModel)
-        self.selectionModel().selectionChanged.connect(
-            self.updateSelection
-        )
+        self.selectionModel().selectionChanged.connect(self._update_selection)
         self.viewport().setMouseTracking(True)
 
         self._executor = concurrent.ThreadExecutor()
@@ -157,33 +153,22 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self._main_widget.setEnabled(False)
         self._executor.submit(self._fetch_task)
 
-    def updateSelection(self):
+    def _update_selection(self):
         pass
 
     def _fetch_indicators(self, progress=lambda val: None):
 
-        def item(displayvalue, item_values={}):
+        def row_item(display_value, item_values={}):
             item = QtGui.QStandardItem()
-            item.setData(displayvalue, Qt.DisplayRole)
-            item.setData("https" + displayvalue, LinkRole)
+            item.setData(display_value, Qt.DisplayRole)
             return item
 
+        indicators = [[""] + row for row in self._api.get_indicator_list()]
+
         model = QtGui.QStandardItemModel()
-        model.setHorizontalHeaderLabels(["", "ID", "Title", "description"])
-        model.appendRow([item(""), item("item 1"), item("2"), ])
-        model.appendRow([item(" "), item("item 3 ua"), item(
-            "oauoe aotuhounotahunoa huoa nuthoea utoanhu oanehuoa"
-            "oauoe aotuhounotahunoa huoa nuthoea utoanhu oanehuoa"
-            "oauoe aotuhounotahunoa huoa nuthoea utoanhu oanehuoa"
-            "usaohu soatehu oanuhtao suhtoa suhoaesuthoasuntoehuso9"), ])
-        model.appendRow([item(""), item("some"), item("3"), ])
-        model.appendRow([item(" "), item("thing"), item("4 ouoeauaouoau"), ])
-        model.appendRow([item(" "), item("else 6"), item("7"), ])
-        model.appendRow([item(" "), item("else 7"), item("14"), ])
-        model.appendRow([item(" "), item("else 8"), item("7"), ])
-        model.appendRow([item(" "), item("else 10"), item("7"), ])
-        model.appendRow([item(" "), item("else 13"), item("10"), ])
-        model.appendRow([item(" "), item("else 9"), item("7"), ])
+        model.setHorizontalHeaderLabels(indicators[0])
+        for row in indicators[1:]:
+            model.appendRow([row_item(i) for i in row])
 
         if QThread.currentThread() is not QCoreApplication.instance().thread():
             model.moveToThread(QCoreApplication.instance().thread())
