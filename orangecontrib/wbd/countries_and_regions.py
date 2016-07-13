@@ -49,11 +49,12 @@ class CountryTreeWidget(QtGui.QTreeWidget):
                     "MNA",  # "Middle East & North Africa (developing only)",
                     "SSA",  # "Sub-Saharan Africa (developing only)",
                 ]),
-                ("High income", [
-                    "EMU",  # "Euro area",
-                    "OEC",  # "High income: OECD",
-                    "NOC",  # "High income: nonOECD",
-                ]),
+                "EMU",  # other high income areas don't exist anymore
+                # ("High income", [
+                #     "EMU",  # "Euro area",
+                #     "OEC",  # "High income: OECD",
+                #     "NOC",  # "High income: nonOECD",
+                # ]),
                 "CEB",  # "Central Europe and the Baltics",
                 "EUU",  # "European Union",
                 "FCS",  # "Fragile and conflict affected situations",
@@ -75,6 +76,10 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         ]),
         ("Countries", []),
     ]
+    RENAME_MAP = {
+        "SST": "All small states",
+        "EMU": "High Income Euro area",
+    }
 
     def __init__(self, parent, selection_list):
         super().__init__(parent)
@@ -174,7 +179,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
         defaults = self._selection_list
         for key, value in data.items():
-            name = value.get("name", key)
+            name = self.RENAME_MAP.get(key, value.get("name", key))
             display_key = "" if name == key else key
 
             item = QtGui.QTreeWidgetItem(parent, [name, display_key])
