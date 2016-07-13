@@ -133,8 +133,16 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.progressBarInit()
 
     @QtCore.pyqtSlot(float)
-    def _setProgress(self, value):
+    def set_progress(self, value):
+
         self.progressBarValue = value
+        if value >= 100:
+            self.setBlocking(False)
+            self.setEnabled(True)
+            self.progressBarFinished()
+        elif value == 0:
+            self.setBlocking(True)
+            self.setEnabled(False)
 
     def filter_indicator_list(self):
         pass

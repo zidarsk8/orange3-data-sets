@@ -145,19 +145,20 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self._executor = concurrent.ThreadExecutor()
 
         func = partial(self._fetch_indicators,
-                       concurrent.methodinvoke(self, "_setProgress", (float,)))
+                       concurrent.methodinvoke(main_widget, "set_progress", (float,)))
         self._fetch_task = concurrent.Task(function=func)
         self._fetch_task.finished.connect(self._fetch_indicators_finished)
         self._fetch_task.exceptionReady.connect(self._init_exception)
-
-        self._main_widget.setBlocking(True)
-        self._main_widget.setEnabled(False)
         self._executor.submit(self._fetch_task)
 
     def _update_selection(self):
         pass
 
     def _fetch_indicators(self, progress=lambda val: None):
+        import time
+        for i in range(102):
+            progress(i)
+            time.sleep(0.04)
 
         def row_item(display_value, item_values={}):
             item = QtGui.QStandardItem()
@@ -194,9 +195,6 @@ class IndicatorsTreeView(QtGui.QTreeView):
         proxy.sort(1, QtCore.Qt.DescendingOrder)
 
         # self.progressBarFinished()
-
-        self._main_widget.setBlocking(False)
-        self._main_widget.setEnabled(True)
 
         for i in range(3):
             self.resizeColumnToContents(i)
