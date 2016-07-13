@@ -131,13 +131,14 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self._api = simple_wbd.IndicatorAPI()
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
+        self.setSelectionMode(QtGui.QTreeView.MultiSelection)
         self.setRootIsDecorated(False)
         self.setSortingEnabled(True)
         self.setUniformRowHeights(True)
         self.viewport().setMouseTracking(True)
 
-        proxyModel = MySortFilterProxyModel(self)
-        self.setModel(proxyModel)
+        proxy_model = MySortFilterProxyModel(self)
+        self.setModel(proxy_model)
         self.selectionModel().selectionChanged.connect(self._update_selection)
         self.viewport().setMouseTracking(True)
 
