@@ -35,7 +35,7 @@ class OWWorldBankIndicators(widget.OWWidget):
         doc="Attribute-valued data set read from the input file.")]
 
     settingsList = ["indicator_list", "mergeSpots", "country_selection",
-                    "splitterSettings", "currentGds", "autoCommit",
+                    "splitterSettings", "currentGds", "auto_commit",
                     "datasetNames", "output_type"]
 
     country_selection = Setting({})
@@ -43,7 +43,7 @@ class OWWorldBankIndicators(widget.OWWidget):
     output_type = Setting(True)
     mergeSpots = Setting(True)
     datasetNames = Setting({})
-    autoCommit = Setting(False)
+    auto_commit = Setting(False)
 
     splitterSettings = Setting(
         (b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xea\x00\x00\x00\xd7\x01\x00\x00\x00\x07\x01\x00\x00\x00\x02',  # noqa
@@ -55,6 +55,7 @@ class OWWorldBankIndicators(widget.OWWidget):
         logger.debug("Initializing {}".format(self.__class__.__name__))
         self.dataset_params = None
         self.datasetName = ""
+        self.selection_changed = False
 
         self._init_layout()
 
@@ -82,7 +83,7 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         gui.separator(output_box)
 
-        gui.auto_commit(self.controlArea, self, "autoCommit", "Commit",
+        gui.auto_commit(self.controlArea, self, "auto_commit", "Commit",
                         box="Commit")
         self.commitIf = self.commit
 
@@ -153,6 +154,15 @@ class OWWorldBankIndicators(widget.OWWidget):
     def _splitter_moved(self, *args):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
+
+    def commit_if(self):
+        if self.auto_commit:
+            self.commit()
+        else:
+            self.selection_changed = True
+
+    def commit(self):
+        pass
 
 
 def main():  # pragma: no cover
