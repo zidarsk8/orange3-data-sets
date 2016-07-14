@@ -7,6 +7,7 @@ world bank data API.
 import sys
 import signal
 import logging
+import collections
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -33,6 +34,12 @@ class OWWorldBankIndicators(widget.OWWidget):
     outputs = [widget.OutputSignal(
         "Data", table.Table,
         doc="Attribute-valued data set read from the input file.")]
+
+    indicator_list_map = collections.OrderedDict([
+        (0, "All"),
+        (1, "Common"),
+        (2, "Featured"),
+    ])
 
     settingsList = ["indicator_list", "mergeSpots", "country_selection",
                     "splitterSettings", "currentGds", "auto_commit",
@@ -69,23 +76,24 @@ class OWWorldBankIndicators(widget.OWWidget):
         info_box = gui.widgetBox(self.controlArea, "Info", addSpace=True)
         self._info_label = gui.widgetLabel(info_box, "Initializing\n\n")
 
-        info_box = gui.widgetBox(self.controlArea, "Indicators", addSpace=True)
-        gui.radioButtonsInBox(info_box, self, "indicator_list",
-                              ["All", "Common", "Featured"], "Rows",
+        indicator_filter_box = gui.widgetBox(self.controlArea, "Indicators",
+                                             addSpace=True)
+        gui.radioButtonsInBox(indicator_filter_box, self, "indicator_list",
+                              self.indicator_list_map.values(), "Rows",
                               callback=self.indicator_list_selected)
+        self.indicator_list = 1
 
-        gui.separator(info_box)
+        gui.separator(indicator_filter_box)
 
         output_box = gui.widgetBox(self.controlArea, "Output", addSpace=True)
         gui.radioButtonsInBox(output_box, self, "output_type",
                               ["Countries", "Time Series"], "Rows",
-                              callback=self.indicator_list_selected)
+                              callback=self.output_type_selected)
 
         gui.separator(output_box)
 
         gui.auto_commit(self.controlArea, self, "auto_commit", "Commit",
                         box="Commit")
-        self.commitIf = self.commit
 
         gui.rubber(self.controlArea)
 
@@ -135,20 +143,19 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
-
         self.progressBarValue = value
-        if value >= 100:
-            self.setBlocking(False)
-            self.setEnabled(True)
+        if value == 100:
             self.progressBarFinished()
-        elif value == 0:
-            self.setBlocking(True)
-            self.setEnabled(False)
 
     def filter_indicator_list(self):
         pass
 
+    def output_type_selected(self):
+        pass
+
     def indicator_list_selected(self):
+        value = self.indicator_list_map.get(self.indicator_list)
+        logger.debug("Indicator list selected: %s", value)
         pass
 
     def _splitter_moved(self, *args):
@@ -156,12 +163,17 @@ class OWWorldBankIndicators(widget.OWWidget):
                                  for sp in self.splitters]
 
     def commit_if(self):
+        logger.debug("Commit If - auto_commit: %s", self.auto_commit)
         if self.auto_commit:
             self.commit()
         else:
             self.selection_changed = True
 
     def commit(self):
+        logger.debug("commit data")
+        country_codes = [k for k, v in self.country_selection.items() if v == 2]
+        print(country_codes)
+
         pass
 
 

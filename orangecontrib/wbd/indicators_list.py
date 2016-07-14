@@ -131,8 +131,11 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self._api = simple_wbd.IndicatorAPI()
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
-        self.setSelectionMode(QtGui.QTreeView.MultiSelection)
         self.setRootIsDecorated(False)
+        # self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        # if not multi_select:
+        self.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+
         self.setSortingEnabled(True)
         self.setUniformRowHeights(True)
         self.viewport().setMouseTracking(True)
@@ -143,10 +146,14 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self.viewport().setMouseTracking(True)
 
         self._executor = concurrent.ThreadExecutor()
+        self.fetch_indicators()
 
+    def fetch_indicators(self):
+        self._main_widget.setBlocking(True)
+        self._main_widget.setEnabled(False)
         func = partial(
             self._fetch_indicators,
-            concurrent.methodinvoke(main_widget, "set_progress", (float,))
+            concurrent.methodinvoke(self._main_widget, "set_progress", (float,))
         )
         self._fetch_task = concurrent.Task(function=func)
         self._fetch_task.finished.connect(self._fetch_indicators_finished)
@@ -157,17 +164,17 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self._main_widget.commit_if()
 
     def _fetch_indicators(self, progress=lambda val: None):
-        import time
-        for i in range(102):
-            progress(i)
-            time.sleep(0.04)
+
+        progress(0)
 
         def row_item(display_value, item_values={}):
             item = QtGui.QStandardItem()
             item.setData(display_value, Qt.DisplayRole)
             return item
 
+        progress(10)
         self._indicator_data = self._api.get_indicator_list()
+        progress(70)
 
         indicators = [[""] + row for row in self._indicator_data]
 
@@ -176,9 +183,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
         for row in indicators[1:]:
             model.appendRow([row_item(i) for i in row])
 
+        progress(100)
         if QThread.currentThread() is not QCoreApplication.instance().thread():
             model.moveToThread(QCoreApplication.instance().thread())
-
         return model
 
     def _init_exception(self):
@@ -207,4 +214,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
             1, min(self.columnWidth(1), 300))
         self.setColumnWidth(
             2, min(self.columnWidth(2), 400))
+
+        self._main_widget.setBlocking(False)
+        self._main_widget.setEnabled(True)
 
