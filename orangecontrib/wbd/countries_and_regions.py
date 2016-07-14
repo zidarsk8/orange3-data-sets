@@ -186,7 +186,8 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             item.setFlags(item.flags() | tristate)
             item.key = value if isinstance(value, str) else key
 
-            item.setCheckState(0, defaults.get(item.key, QtCore.Qt.Checked))
+            defaults[item.key] = defaults.get(item.key, QtCore.Qt.Checked)
+            item.setCheckState(0, defaults[item.key])
             if isinstance(value, collections.OrderedDict):
                 self._fill_values(value, item)
 
