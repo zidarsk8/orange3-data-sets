@@ -128,6 +128,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
     def __init__(self, parent, main_widget=None):
         super().__init__(parent)
         self._main_widget = main_widget
+        self._fetch_task = None
         self._api = simple_wbd.IndicatorAPI()
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
@@ -193,6 +194,8 @@ class IndicatorsTreeView(QtGui.QTreeView):
 
     def _fetch_indicators_finished(self):
         assert self.thread() is QtCore.QThread.currentThread()
+        if self._fetch_task is None:
+            return
         model = self._fetch_task.result()
         model.setParent(self)
 
