@@ -133,7 +133,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
         self.setRootIsDecorated(False)
-        # self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         # if not multi_select:
         self.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
@@ -161,7 +161,12 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self._fetch_task.exceptionReady.connect(self._init_exception)
         self._executor.submit(self._fetch_task)
 
+    def _get_selected_ids(self):
+        return [i.data(Qt.DisplayRole) for i in self.selectedIndexes()
+                if i.column() == 1]
+
     def _update_selection(self):
+        self._main_widget.indicator_selection = self._get_selected_ids()
         self._main_widget.commit_if()
 
     def _fetch_indicators(self, progress=lambda val: None):
@@ -174,7 +179,8 @@ class IndicatorsTreeView(QtGui.QTreeView):
             return item
 
         progress(10)
-        self._indicator_data = self._api.get_indicator_list()
+        filter_ = self._main_widget.basic_indicator_filter()
+        self._indicator_data = self._api.get_indicator_list(filter_=filter_)
         progress(70)
 
         indicators = [[""] + row for row in self._indicator_data]

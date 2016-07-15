@@ -18,6 +18,7 @@ from Orange.widgets.settings import Setting
 
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd.indicators_list import IndicatorsTreeView
+from orangecontrib.wbd import api_wrapper
 
 TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
@@ -41,12 +42,14 @@ class OWWorldBankIndicators(widget.OWWidget):
         (2, "Featured"),
     ])
 
-    settingsList = ["indicator_list", "mergeSpots", "country_selection",
+    settingsList = ["indicator_list_selection", "mergeSpots", "country_selection",
+                    "indicator_selection"
                     "splitterSettings", "currentGds", "auto_commit",
                     "datasetNames", "output_type"]
 
     country_selection = Setting({})
-    indicator_list = Setting(True)
+    indicator_selection = Setting([])
+    indicator_list_selection = Setting(True)
     output_type = Setting(True)
     mergeSpots = Setting(True)
     datasetNames = Setting({})
@@ -60,14 +63,12 @@ class OWWorldBankIndicators(widget.OWWidget):
     def __init__(self):
         super().__init__()
         logger.debug("Initializing {}".format(self.__class__.__name__))
+        self._api = api_wrapper.IndicatorAPI()
         self.dataset_params = None
         self.datasetName = ""
         self.selection_changed = False
 
         self._init_layout()
-
-    def commit(self):
-        pass
 
     def _init_layout(self):
         """Initialize widget layout."""
@@ -78,10 +79,10 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         indicator_filter_box = gui.widgetBox(self.controlArea, "Indicators",
                                              addSpace=True)
-        gui.radioButtonsInBox(indicator_filter_box, self, "indicator_list",
+        gui.radioButtonsInBox(indicator_filter_box, self, "indicator_list_selection",
                               self.indicator_list_map.values(), "Rows",
                               callback=self.indicator_list_selected)
-        self.indicator_list = 1
+        self.indicator_list_selection = 1
 
         gui.separator(indicator_filter_box)
 
@@ -112,11 +113,11 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.mainArea.layout().addWidget(self.filter_text)
         self.mainArea.layout().addWidget(splitter)
 
-        self.treeWidget = IndicatorsTreeView(splitter, main_widget=self)
+        self.indicator_widget = IndicatorsTreeView(splitter, main_widget=self)
 
-        # linkdelegate = LinkStyledItemDelegate(self.treeWidget)
-        # self.treeWidget.setItemDelegateForColumn(1, linkdelegate)
-        # self.treeWidget.setItemDelegateForColumn(8, linkdelegate)
+        # linkdelegate = LinkStyledItemDelegate(self.indacator_tree)
+        # self.indacator_tree.setItemDelegateForColumn(1, linkdelegate)
+        # self.indacator_tree.setItemDelegateForColumn(8, linkdelegate)
 
         splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
 
@@ -153,10 +154,13 @@ class OWWorldBankIndicators(widget.OWWidget):
     def output_type_selected(self):
         pass
 
+    def basic_indicator_filter(self):
+        return self.indicator_list_map.get(self.indicator_list_selection)
+
     def indicator_list_selected(self):
-        value = self.indicator_list_map.get(self.indicator_list)
+        value = self.basic_indicator_filter()
         logger.debug("Indicator list selected: %s", value)
-        pass
+        self.indicator_widget.fetch_indicators()
 
     def _splitter_moved(self, *args):
         self.splitterSettings = [bytes(sp.saveState())
@@ -171,10 +175,13 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     def commit(self):
         logger.debug("commit data")
-        country_codes = [k for k, v in self.country_selection.items() if v == 2]
+        country_codes = [k for k, v in self.country_selection.items()
+                         if v == 2 and len(k) == 3]
         print(country_codes)
-
-        pass
+        print(self.indicator_selection)
+        indicator_dataset = self._api.get_dataset(self.indicator_selection,
+                                                  countries=country_codes)
+        print(indicator_dataset.as_orange_table())
 
 
 def main():  # pragma: no cover
