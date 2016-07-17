@@ -82,7 +82,7 @@ class OWWorldBankIndicators(widget.OWWidget):
         gui.radioButtonsInBox(indicator_filter_box, self, "indicator_list_selection",
                               self.indicator_list_map.values(), "Rows",
                               callback=self.indicator_list_selected)
-        self.indicator_list_selection = 1
+        self.indicator_list_selection = 2
 
         gui.separator(indicator_filter_box)
 
@@ -90,6 +90,7 @@ class OWWorldBankIndicators(widget.OWWidget):
         gui.radioButtonsInBox(output_box, self, "output_type",
                               ["Countries", "Time Series"], "Rows",
                               callback=self.output_type_selected)
+        self.output_type = 0
 
         gui.separator(output_box)
 
