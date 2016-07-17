@@ -176,7 +176,9 @@ class OWWorldBankIndicators(widget.OWWidget):
     def commit(self):
         logger.debug("commit data")
         country_codes = [k for k, v in self.country_selection.items()
-                         if v == 2 and len(k) == 3]
+                         if v == 2 and len(str(k)) == 3]
+        if len(country_codes) > 250:
+            country_codes = None
         print(country_codes)
         print(self.indicator_selection)
         indicator_dataset = self._api.get_dataset(self.indicator_selection,
