@@ -43,6 +43,9 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
     def as_orange_table(self, timeseries=False):
         data = self.as_list(timeseries)
 
+        if not data:
+            return None
+
         if data[0][0] == "Date":
             first_column = Orange.data.TimeVariable("Date")
             for row in data[1:]:
