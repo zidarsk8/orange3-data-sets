@@ -15,6 +15,7 @@ from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
+from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd.indicators_list import IndicatorsTreeView
@@ -176,6 +177,19 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     def commit(self):
         logger.debug("commit data")
+
+        self._executor.submit(self._fetch_dataset())
+        func = partial(
+            self._fetch_indicators,
+            concurrent.methodinvoke(self._main_widget, "set_progress", (float,))
+        )
+        self._fetch_task = concurrent.Task(function=func)
+        self._fetch_task.finished.connect(self._fetch_indicators_finished)
+        self._fetch_task.exceptionReady.connect(self._init_exception)
+        self._executor.submit(self._fetch_task)
+
+    def _fetch_dataset(self):
+
         country_codes = [k for k, v in self.country_selection.items()
                          if v == 2 and len(str(k)) == 3]
         if len(country_codes) > 250:
