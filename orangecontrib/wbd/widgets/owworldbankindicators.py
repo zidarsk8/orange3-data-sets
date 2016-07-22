@@ -71,8 +71,14 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.dataset_params = None
         self.datasetName = ""
         self.selection_changed = False
-        self._set_progress = False
+        self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
+        self.info_data = collections.OrderedDict([
+            ("Server Status", None),
+            ("Indicators", None),
+            ("Rows", None),
+            ("Columns", None),
+        ])
 
         self._init_layout()
 
@@ -151,6 +157,7 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
+        logger.debug("Set progress: %s", value)
         self.progressBarValue = value
         if value == 100:
             self.progressBarFinished()
@@ -181,8 +188,9 @@ class OWWorldBankIndicators(widget.OWWidget):
             self.selection_changed = True
 
     def commit(self):
-
         logger.debug("commit data")
+        self.setEnabled(False)
+        self._set_progress_flag = True
 
         func = partial(
             self._fetch_dataset,
@@ -193,14 +201,9 @@ class OWWorldBankIndicators(widget.OWWidget):
         self._fetch_task.exceptionReady.connect(self._fetch_dataset_exception)
         self._executor.submit(self._fetch_task)
 
-    def _fetch_dataset_finished(self):
-        pass
+    def _fetch_dataset(self, set_progress=None):
 
-    def _fetch_dataset_exception(self):
-        pass
-
-    def _fetch_dataset(self, progress=None):
-        self._set_progress = True
+        set_progress(0)
 
         func = partial(
             self._dataset_progress,
@@ -216,31 +219,57 @@ class OWWorldBankIndicators(widget.OWWidget):
                          if v == 2 and len(str(k)) == 3]
         if len(country_codes) > 250:
             country_codes = None
-        print(country_codes)
-        print(self.indicator_selection)
+        logger.debug("Fetch: selected country codes: %s", country_codes)
+        logger.debug("Fetch: selected indicators: %s", self.indicator_selection)
         indicator_dataset = self._api.get_dataset(self.indicator_selection,
                                                   countries=country_codes)
-        print(indicator_dataset.as_orange_table())
-        self._set_progress = False
+        self._set_progress_flag = False
+        return indicator_dataset
 
-    def _dataset_progress_finished(self):
-        print(3)
+    def _fetch_dataset_finished(self):
+        assert self.thread() is QtCore.QThread.currentThread()
+        self.setEnabled(True)
+        self._set_progress_flag = False
+        self.set_progress(100)
 
-    def _dataset_progress_exception(self, e):
-        print(2, e)
+        if self._fetch_task is None:
+            return
+
+        indicator_dataset = self._fetch_task.result()
+        data_table = indicator_dataset.as_orange_table()
+        self.info_data["Rows"] = data_table.n_rows
+
+        self.print_info()
+
+    def _fetch_dataset_exception(self, exception):
+        logger.exception(exception)
 
     def _dataset_progress(self, set_progress=None):
-        while (self._set_progress):
+        while self._set_progress_flag:
             indicators = self._api.progress["indicators"]
             current_indicator = self._api.progress["current_indicator"]
             indicator_pages = self._api.progress["indicator_pages"]
             current_page = self._api.progress["current_page"]
+            logger.debug("api progress: %s", self._api.progress)
             if indicator_pages > 0 and indicators > 0:
-                progress = ((100 / indicators) * (current_indicator - 1)) + (100 / indicators) * (current_page/ indicator_pages)
+                progress = (
+                    ((100 / indicators) * (current_indicator - 1)) +
+                    (100 / indicators) * (current_page/ indicator_pages)
+                )
+                logger.debug("calculated progress: %s", progress)
                 set_progress(math.floor(progress))
-            time.sleep(0.5)
+            time.sleep(1)
 
+    def _dataset_progress_finished(self):
+        pass
 
+    def _dataset_progress_exception(self, exception):
+        logger.exception(exception)
+
+    def print_info(self):
+        lines = ["{}: {}".format(k, v) for k, v in self.info_data.items()
+                 if v is not None]
+        self._info_label.setText("\n".join(lines))
 
 
 def main():  # pragma: no cover

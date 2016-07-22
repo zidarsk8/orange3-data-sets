@@ -224,6 +224,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self.setColumnWidth(
             2, min(self.columnWidth(2), 400))
 
+        self._main_widget.info_data["Indicators"] = model.rowCount()
+        self._main_widget.print_info()
+
         self._main_widget.setBlocking(False)
         self._main_widget.setEnabled(True)
 
