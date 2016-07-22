@@ -171,21 +171,22 @@ class IndicatorsTreeView(QtGui.QTreeView):
         data = self._indicator_data.get(indicator_id, {})
         return textwrap.dedent(
             """
-            ID: {}
-            Name: {}
-            Source: {}
-            Description: {}
-            Organization: {}
-            Topics:
-                {}
+            <b>ID:</b> {} <br>
+            <b>Name</b>: {} <br>
+            <b>Source</b>: {} <br>
+            <b>Description</b>: {} <br>
+            <b>Organization</b>: {} <br>
+            <b>Topics</b>:
+                <ul>{}</ul>
+            <br>
             """.format(
                 data.get("id", ""),
                 data.get("name", ""),
                 data.get("source", {}).get("value", ""),
                 data.get("sourceNote", ""),
                 data.get("sourceOrganization", ""),
-                "\n                ".join(
-                    t["value"] for t in data.get("topics", {}) if t.get("value")
+                "\n                 ".join(
+                    "<li>{}</li>".format(t["value"]) for t in data.get("topics", {}) if t.get("value")
                 ),
             )
         )
@@ -193,8 +194,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
     def _update_selection(self):
         self._main_widget.indicator_selection = self._get_selected_ids()
         text = "\n\n".join(self._generate_description(indicator_id=indicator_id) for indicator_id in self._get_selected_ids())
+        print(text)
         self._main_widget.indicator_description.clear()
-        self._main_widget.indicator_description.setText(text)
+        self._main_widget.indicator_description.setHtml(text)
         self._main_widget.commit_if()
 
     def _fetch_indicators(self, progress=lambda val: None):

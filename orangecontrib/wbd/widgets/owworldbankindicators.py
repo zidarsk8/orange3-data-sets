@@ -135,9 +135,10 @@ class OWWorldBankIndicators(widget.OWWidget):
         splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
 
         box = gui.widgetBox(splitterH, "Description")
-        self.indicator_description = gui.widgetLabel(box, "")
-        self.indicator_description.setWordWrap(True)
-        gui.rubber(box)
+
+        self.indicator_description = QtGui.QTextEdit()
+        self.indicator_description.setReadOnly(True)
+        box.layout().addWidget(self.indicator_description)
 
         box = gui.widgetBox(splitterH, "Sample Annotations")
         self.country_tree = CountryTreeWidget(
