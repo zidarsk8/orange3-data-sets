@@ -1,4 +1,5 @@
 
+import textwrap
 import logging
 from functools import partial
 from functools import lru_cache
@@ -129,6 +130,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
         super().__init__(parent)
         self._main_widget = main_widget
         self._fetch_task = None
+        self._indicator_data = None
         self._api = simple_wbd.IndicatorAPI()
         self.setAlternatingRowColors(True)
         self.setEditTriggers(QtGui.QTreeView.NoEditTriggers)
@@ -165,8 +167,34 @@ class IndicatorsTreeView(QtGui.QTreeView):
         return [i.data(Qt.DisplayRole) for i in self.selectedIndexes()
                 if i.column() == 1]
 
+    def _generate_description(self, indicator_id):
+        data = self._indicator_data.get(indicator_id, {})
+        return textwrap.dedent(
+            """
+            ID: {}
+            Name: {}
+            Source: {}
+            Description: {}
+            Organization: {}
+            Topics:
+                {}
+            """.format(
+                data.get("id", ""),
+                data.get("name", ""),
+                data.get("source", {}).get("value", ""),
+                data.get("sourceNote", ""),
+                data.get("sourceOrganization", ""),
+                "\n                ".join(
+                    t["value"] for t in data.get("topics", {}) if t.get("value")
+                ),
+            )
+        )
+
     def _update_selection(self):
         self._main_widget.indicator_selection = self._get_selected_ids()
+        text = "\n\n".join(self._generate_description(indicator_id=indicator_id) for indicator_id in self._get_selected_ids())
+        self._main_widget.indicator_description.clear()
+        self._main_widget.indicator_description.setText(text)
         self._main_widget.commit_if()
 
     def _fetch_indicators(self, progress=lambda val: None):
@@ -180,10 +208,12 @@ class IndicatorsTreeView(QtGui.QTreeView):
 
         progress(10)
         filter_ = self._main_widget.basic_indicator_filter()
-        self._indicator_data = self._api.get_indicator_list(filter_=filter_)
+        data = self._api.get_indicators(filter_=filter_)
+        self._indicator_data = {ind["id"]: ind for ind in data}
         progress(70)
 
-        indicators = [[""] + row for row in self._indicator_data]
+        indicators = [[""] + row for row in
+                      self._api.get_indicator_list(filter_=filter_)]
 
         model = QtGui.QStandardItemModel()
         model.setHorizontalHeaderLabels(indicators[0])
