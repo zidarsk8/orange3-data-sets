@@ -192,11 +192,17 @@ class IndicatorsTreeView(QtGui.QTreeView):
         )
 
     def _update_selection(self):
-        self._main_widget.indicator_selection = self._get_selected_ids()
+        ids = self._get_selected_ids()
+        self._main_widget.indicator_selection = ids
         text = "\n\n".join(self._generate_description(indicator_id=indicator_id) for indicator_id in self._get_selected_ids())
-        print(text)
         self._main_widget.indicator_description.clear()
         self._main_widget.indicator_description.setHtml(text)
+        self._main_widget.description_box.setTitle(
+            "Description ({} {} selected)".format(
+                len(ids),
+                "indicator" if len(ids) == 1 else "indicators",
+            )
+        )
         self._main_widget.commit_if()
 
     def _fetch_indicators(self, progress=lambda val: None):
