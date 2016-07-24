@@ -1,6 +1,7 @@
 # package requirements
 observable
 simple_wbd
+Orange
 
 # development requirements
 mock

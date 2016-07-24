@@ -128,10 +128,6 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         self.indicator_widget = IndicatorsTreeView(splitter, main_widget=self)
 
-        # linkdelegate = LinkStyledItemDelegate(self.indacator_tree)
-        # self.indacator_tree.setItemDelegateForColumn(1, linkdelegate)
-        # self.indacator_tree.setItemDelegateForColumn(8, linkdelegate)
-
         splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
 
         self.description_box = gui.widgetBox(splitterH, "Description")
@@ -237,12 +233,15 @@ class OWWorldBankIndicators(widget.OWWidget):
             return
 
         indicator_dataset = self._fetch_task.result()
-        data_table = indicator_dataset.as_orange_table()
+        time_series = self.output_type == 1
+        data_table = indicator_dataset.as_orange_table(time_series=time_series)
         self.info_data["Rows"] = data_table.n_rows
 
         self.print_info()
+        self.send("Data", data_table)
 
-    def _fetch_dataset_exception(self, exception):
+    @staticmethod
+    def _fetch_dataset_exception(exception):
         logger.exception(exception)
 
     def _dataset_progress(self, set_progress=None):

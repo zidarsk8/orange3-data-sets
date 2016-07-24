@@ -5,7 +5,10 @@ data manipulation and generating Orange data tables.
 """
 
 import datetime
+import time
 import logging
+
+import numpy
 
 import Orange
 import simple_wbd
@@ -40,37 +43,51 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
             # http://api.worldbank.org/countries/all/indicators/DB_mw_19apprentice?format=json&mrv=10&gapfill=y  # noqa
             return datetime.date.today().isoformat()
 
-    def as_orange_table(self, timeseries=False):
-        data = self.as_list(timeseries)
+    def _time_series_table(self):
+        data = numpy.array(self.as_list(time_series=True))
 
-        if not data:
+        if not data.any():
             return None
 
-        if data[0][0] == "Date":
-            first_column = Orange.data.TimeVariable("Date")
-            for row in data[1:]:
-                row[0] = first_column.parse(self._get_iso_date(row[0]))
-        elif data[0][0] == "Country":
-            countries = [row[0] for row in data[1:]]
-            first_column = Orange.data.DiscreteVariable(
-                "Country", values=countries)
+        meta_columns = [[time.mktime(date_.timetuple()) if date_ else None]
+                        for date_ in data[1:,0]]
+        data_columns = data[1:, 1:]
+
+        meta_domains = [Orange.data.TimeVariable("Date")]
+
+        colum_domains = [Orange.data.ContinuousVariable(column_name)
+                         for column_name in data[0, 1:]]
+
+        logger.debug("Generated Orange table of size: %s", data.shape)
+
+        domain = Orange.data.Domain(colum_domains, metas=meta_domains)
+        return Orange.data.Table(domain, data_columns, metas=meta_columns)
+
+
+    def _country_table(self):
+        data = numpy.array(self.as_list(add_metadata=True))
+
+        if not data.any():
+            return None
+
+        meta_columns = data[1:,:7]
+        data_columns = data[1:,7:]
+
+        meta_domains = [Orange.data.StringVariable(name)
+                        for name in data[0, :7]]
+        colum_domains = [Orange.data.ContinuousVariable(column_name)
+                         for column_name in data[0, 7:]]
+
+        logger.debug("Generated Orange table of size: %s", data.shape)
+
+        domain = Orange.data.Domain(colum_domains, metas=meta_domains)
+        return Orange.data.Table(domain, data_columns, metas=meta_columns)
+
+    def as_orange_table(self, time_series=False):
+        if time_series:
+            return self._time_series_table()
         else:
-            logger.warning("Failed to create Orange table.")
-            return
-
-        logger.debug(
-            "Generated Orange table with  %s data rows and %s columns.",
-            len(data),
-            len(data[0]) if data else 0,
-        )
-        domain_columns = [first_column] + [
-            Orange.data.ContinuousVariable(column_name)
-            for column_name in data[0][1:]
-        ]
-
-        domain = Orange.data.Domain(domain_columns)
-        data = Orange.data.Table(domain, data[1:])
-        return data
+            return self._country_table()
 
 
 class IndicatorAPI(simple_wbd.IndicatorAPI):

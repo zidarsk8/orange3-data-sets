@@ -1,4 +1,5 @@
 
+import collections
 import textwrap
 import logging
 from functools import partial
