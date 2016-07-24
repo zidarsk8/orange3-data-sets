@@ -10,7 +10,6 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.widgets import gui
 from Orange.widgets.utils import concurrent
-from Orange.widgets.gui import LinkRole
 
 TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
@@ -139,6 +138,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
         # if not multi_select:
         self.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
+        linkdelegate = gui.LinkStyledItemDelegate(self)
+        self.setItemDelegateForColumn(1, linkdelegate)
+
         self.setSortingEnabled(True)
         self.setUniformRowHeights(True)
         self.viewport().setMouseTracking(True)
@@ -205,6 +207,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
         )
         self._main_widget.commit_if()
 
+    def _get_link(self, id_):
+        return "http://data.worldbank.org/indicator/{}?view=chart".format(id_)
+
     def _fetch_indicators(self, progress=lambda val: None):
 
         progress(0)
@@ -212,6 +217,8 @@ class IndicatorsTreeView(QtGui.QTreeView):
         def row_item(display_value, item_values={}):
             item = QtGui.QStandardItem()
             item.setData(display_value, Qt.DisplayRole)
+            for role, value in item_values.items():
+                item.setData(value, role)
             return item
 
         progress(10)
@@ -226,7 +233,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
         model = QtGui.QStandardItemModel()
         model.setHorizontalHeaderLabels(indicators[0])
         for row in indicators[1:]:
-            model.appendRow([row_item(i) for i in row])
+            row_data = [row_item(item) for item in row]
+            row_data[1].setData(self._get_link(row[1]), gui.LinkRole)
+            model.appendRow(row_data)
 
         progress(100)
         if QThread.currentThread() is not QCoreApplication.instance().thread():
