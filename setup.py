@@ -23,13 +23,13 @@ ENTRY_POINTS = {
         'html-index = orangecontrib.wbd.widgets:WIDGET_HELP_PATH',)
 }
 
-KEYWORDS = (
+KEYWORDS = [
     # [PyPi](https://pypi.python.org) packages with keyword "orange3 add-on"
     # can be installed using the Orange Add-on Manager
     "orange3 add-on",
-    "World bank data",
-    "Indicator api",
-)
+    "world bank data",
+    "indicator api",
+]
 
 
 def get_description():
