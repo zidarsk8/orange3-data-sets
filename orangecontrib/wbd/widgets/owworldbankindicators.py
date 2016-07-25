@@ -160,7 +160,12 @@ class OWWorldBankIndicators(widget.OWWidget):
             self.progressBarFinished()
 
     def filter_indicator_list(self):
-        pass
+        filter_string = self.filter_text.text()
+        proxy_model = self.indicator_widget.model()
+        if proxy_model:
+            strings = filter_string.lower().strip().split()
+            proxy_model.setFilterFixedStrings(strings)
+            self.print_info()
 
     def output_type_selected(self):
         pass

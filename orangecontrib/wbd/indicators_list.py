@@ -234,7 +234,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
         model = QtGui.QStandardItemModel()
         model.setHorizontalHeaderLabels(indicators[0])
         for row in indicators[1:]:
+            search_string = " | ".join(row).lower()
             row_data = [row_item(item) for item in row]
+            row_data[0].setData(search_string, TextFilterRole)
             row_data[1].setData(self._get_link(row[1]), gui.LinkRole)
             model.appendRow(row_data)
 
