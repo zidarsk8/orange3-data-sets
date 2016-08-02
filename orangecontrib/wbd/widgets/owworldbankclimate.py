@@ -28,7 +28,7 @@ TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
 
 
-class OWWorldBankIndicators(widget.OWWidget):
+class OWWorldBankClimate(widget.OWWidget):
     """World bank data widget for Orange."""
 
     # Widget needs a name, or it is considered an abstract widget
@@ -89,14 +89,10 @@ class OWWorldBankIndicators(widget.OWWidget):
         info_box = gui.widgetBox(self.controlArea, "Info", addSpace=True)
         self._info_label = gui.widgetLabel(info_box, "Initializing\n\n")
 
-        indicator_filter_box = gui.widgetBox(self.controlArea, "Indicators",
+        data_type_filter_box = gui.widgetBox(self.controlArea, "Indicators",
                                              addSpace=True)
-        gui.radioButtonsInBox(indicator_filter_box, self, "indicator_list_selection",
-                              self.indicator_list_map.values(), "Rows",
-                              callback=self.indicator_list_selected)
-        self.indicator_list_selection = 2
 
-        gui.separator(indicator_filter_box)
+        gui.separator(data_type_filter_box)
 
         output_box = gui.widgetBox(self.controlArea, "Output", addSpace=True)
         gui.radioButtonsInBox(output_box, self, "output_type",
@@ -113,44 +109,12 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         # Main area
 
-        gui.widgetLabel(self.mainArea, "Filter")
-        self.filter_text = QtGui.QLineEdit(
-            textChanged=self.filter_indicator_list)
-        self.completer = QtGui.QCompleter(
-            caseSensitivity=QtCore.Qt.CaseInsensitive)
-        self.completer.setModel(QtGui.QStringListModel(self))
-        self.filter_text.setCompleter(self.completer)
-
-        splitter = QtGui.QSplitter(QtCore.Qt.Vertical, self.mainArea)
-
-        self.mainArea.layout().addWidget(self.filter_text)
-        self.mainArea.layout().addWidget(splitter)
-
-        self.indicator_widget = IndicatorsTreeView(splitter, main_widget=self)
-
-        splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
-
-        self.description_box = gui.widgetBox(splitterH, "Description")
-
-        self.indicator_description = QtGui.QTextEdit()
-        self.indicator_description.setReadOnly(True)
-        self.description_box.layout().addWidget(self.indicator_description)
-
-        box = gui.widgetBox(splitterH, "Countries and Regions")
+        box = gui.widgetBox(self.mainArea, "Countries")
         self.country_tree = CountryTreeWidget(
-            splitterH, self.country_selection)
+            self.mainArea, self.country_selection)
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
 
-        self.splitters = splitter, splitterH
-
-        for sp, setting in zip(self.splitters, self.splitterSettings):
-            sp.splitterMoved.connect(self._splitter_moved)
-            sp.restoreState(setting)
-
-        # self.resize(2000, 600)  # why does this not work
-
-        self.progressBarInit()
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
@@ -277,7 +241,7 @@ def main():  # pragma: no cover
     logging.basicConfig(level=logging.DEBUG)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtGui.QApplication(sys.argv)
-    orange_widget = OWWorldBankIndicators()
+    orange_widget = OWWorldBankClimate()
     orange_widget.show()
     app.exec_()
     orange_widget.saveSettings()
@@ -285,3 +249,4 @@ def main():  # pragma: no cover
 
 if __name__ == "__main__":
     main()
+
