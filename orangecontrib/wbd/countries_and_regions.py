@@ -213,6 +213,9 @@ class CountryTreeWidget(QtGui.QTreeWidget):
     def _set_data(self):
         self._busy = True
         self.clear()
+        from orangecontrib.wbd import countries
+
+        self._country_dict = countries.get_countries_dict()
         self._fill_values(self._country_dict)
 
         self.expandAll()
