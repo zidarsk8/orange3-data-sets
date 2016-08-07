@@ -136,7 +136,7 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.indicator_description.setReadOnly(True)
         self.description_box.layout().addWidget(self.indicator_description)
 
-        box = gui.widgetBox(splitterH, "Sample Annotations")
+        box = gui.widgetBox(splitterH, "Countries and Regions")
         self.country_tree = CountryTreeWidget(
             splitterH, self.country_selection)
         box.layout().addWidget(self.country_tree)
