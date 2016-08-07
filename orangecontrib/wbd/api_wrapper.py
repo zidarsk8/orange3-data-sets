@@ -44,7 +44,7 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
             return datetime.date.today().isoformat()
 
     def _time_series_table(self):
-        data = numpy.array(self.as_list(time_series=True))
+        data = self.as_np_array(time_series=True)
 
         if not data.any():
             return None
@@ -63,9 +63,8 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
         domain = Orange.data.Domain(colum_domains, metas=meta_domains)
         return Orange.data.Table(domain, data_columns, metas=meta_columns)
 
-
     def _country_table(self):
-        data = numpy.array(self.as_list(add_metadata=True))
+        data = self.as_np_array(add_metadata=True)
 
         if not data.any():
             return None
@@ -82,6 +81,14 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
 
         domain = Orange.data.Domain(colum_domains, metas=meta_domains)
         return Orange.data.Table(domain, data_columns, metas=meta_columns)
+
+    def as_np_array(self, time_series=False, add_metadata=False):
+        data = numpy.array(self.as_list(time_series=time_series,
+                                        add_metadata=add_metadata))
+
+        # list of column indexes that have at least one non zero value
+        filter_ = [ind for ind, col in enumerate(data[1:,:].T) if any(col)]
+        return data[:,filter_]
 
     def as_orange_table(self, time_series=False):
         if time_series:
