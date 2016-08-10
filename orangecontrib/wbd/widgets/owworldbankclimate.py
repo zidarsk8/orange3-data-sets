@@ -23,6 +23,7 @@ from Orange.widgets.utils import concurrent
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd.indicators_list import IndicatorsTreeView
 from orangecontrib.wbd import api_wrapper
+from orangecontrib.wbd import countries
 
 TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
@@ -112,6 +113,7 @@ class OWWorldBankClimate(widget.OWWidget):
         box = gui.widgetBox(self.mainArea, "Countries")
         self.country_tree = CountryTreeWidget(
             self.mainArea, self.country_selection)
+        self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
 
