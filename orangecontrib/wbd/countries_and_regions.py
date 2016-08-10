@@ -91,66 +91,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         self._init_listeners()
 
     def _init_data(self):
-        self._add_country_data()
         self._set_data()
-
-    def _gather_used_ids(self, items=None):
-        if items is None:
-            items = self._data_structure
-        ids = set()
-        for item in items:
-            if isinstance(item, str):
-                ids.add(item)
-            else:
-                ids |= self._gather_used_ids(item[1])
-        return ids
-
-    def _add_missing_aggregates(self):
-        countries = self._api.get_countries()
-        aggregate_codes = set([
-            i.get("id") for i in countries
-            if i.get("region", {}).get("value") == "Aggregates"
-        ])
-        used_codes = self._gather_used_ids()
-        missing_aggregates = aggregate_codes.difference(used_codes)
-        for code in sorted(missing_aggregates):
-            # 0,1 = Aggregates, 2,1 = Other
-            self._data_structure[0][1][2][1].append(code)
-
-    def _add_missing_countries(self):
-        countries = self._api.get_countries()
-        country_codes = set([
-            i.get("id") for i in countries
-            if i.get("region", {}).get("value") != "Aggregates"
-        ])
-        for code in sorted(country_codes):
-            # 1 = Countries
-            self._data_structure[1][1].append(code)
-
-
-    def _generate_country_dict(self, data=None):
-        if not data:
-            data = self._data_structure
-        country_dict = collections.OrderedDict()
-
-        for item in data:
-            if isinstance(item, tuple):
-                country_dict[item[0]] = self._generate_country_dict(item[1])
-            elif item in self._country_map:
-                country_dict[item] = self._country_map[item]
-            else:
-                logger.info("Missing country item: %s", item)
-        return country_dict
-
-    def _generate_country_map(self):
-        countries = self._api.get_countries()
-        self._country_map = {c["id"]: c for c in countries}
-
-    def _add_country_data(self):
-        self._add_missing_aggregates()
-        self._add_missing_countries()
-        self._generate_country_map()
-        self._country_dict = self._generate_country_dict()
 
     def _init_listeners(self):
         self.itemChanged.connect(self.selection_changed)
@@ -215,7 +156,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         self.clear()
         from orangecontrib.wbd import countries
 
-        self._country_dict = countries.get_countries_dict()
+        self._country_dict = countries.get_countries_regions_dict()
         self._fill_values(self._country_dict)
 
         self.expandAll()

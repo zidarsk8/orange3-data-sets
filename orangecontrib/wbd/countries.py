@@ -1,6 +1,12 @@
+import copy
 import pycountry
+import logging
 from collections import defaultdict
 from collections import OrderedDict
+
+import simple_wbd
+
+logger = logging.getLogger(__name__)
 
 MAPPINGS = {
     # Africa
@@ -320,8 +326,73 @@ COUNTRIES = {
     ],
 }
 
+_data_structure = [
+    ("Aggregates", [
+        ("Income Levels", [
+            "LIC",  # "Low income"
+            "MIC",  # "Middle income",
+            "LMC",  # "Lower middle income",
+            "UMC",  # "Upper middle income",
+            "HIC",  # "High income",
+        ]),
+        ("Regions", [
+            "EAS",  # "East Asia & Pacific (all income levels)",
+            "ECS",  # "Europe & Central Asia (all income levels)",
+            "LCN",  # "Latin America & Caribbean (all income levels)",
+            "MEA",  # "Middle East & North Africa (all income levels)",
+            "NAC",  # "North America",
+            "SAS",  # "South Asia",
+            "SSF",  # "Sub-Saharan Africa (all income levels)",
+        ]),
+        ("Other", [
+            "WLD",  # "World",
+            "AFR",  # "Africa",
+            "ARB",  # "Arab World",
+            ("Low & middle income", [
+                "LMY",  # "All low and middle income regions",
+                "EAP",  # "East Asia & Pacific (developing only)",
+                "ECA",  # "Europe & Central Asia (developing only)",
+                "LAC",  # "Latin America & Caribbean (developing only)",
+                "MNA",  # "Middle East & North Africa (developing only)",
+                "SSA",  # "Sub-Saharan Africa (developing only)",
+            ]),
+            "EMU",  # other high income areas don't exist anymore
+            # ("High income", [
+            #     "EMU",  # "Euro area",
+            #     "OEC",  # "High income: OECD",
+            #     "NOC",  # "High income: nonOECD",
+            # ]),
+            "CEB",  # "Central Europe and the Baltics",
+            "EUU",  # "European Union",
+            "FCS",  # "Fragile and conflict affected situations",
+            "HPC",  # "Heavily indebted poor countries (HIPC)",
+            "IBD",  # "IBRD only",
+            "IBT",  # "IDA & IBRD total",
+            "IDB",  # "IDA blend",
+            "IDX",  # "IDA only",
+            "IDA",  # "IDA total",
+            "LDC",  # "Least developed countries: UN classification",
+            "OED",  # "OECD members",
+            ("Small states", [
+                "SST",  # "All small states",
+                "CSS",  # "Caribbean small states",
+                "PSS",  # "Pacific island small states",
+                "OSS",  # "Other small states",
+            ]),
+        ]),
+    ]),
+    ("Countries", []),
+]
+
+RENAME_MAP = {
+    "SST": "All small states",
+    "EMU": "High Income Euro area",
+}
+
+
 def _order_countries_dict(countries):
     return OrderedDict(sorted(countries.items(), key=lambda x: x[1]["name"]))
+
 
 def get_countries_dict():
     result = defaultdict(dict)
@@ -334,6 +405,72 @@ def get_countries_dict():
     result = {k: _order_countries_dict(v) for k, v in result.items()}
     result = OrderedDict(sorted(result.items(), key=lambda t: t[0]))
     return result
+
+
+def _gather_used_ids(items):
+    ids = set()
+    for item in items:
+        if isinstance(item, str):
+            ids.add(item)
+        else:
+            ids |= _gather_used_ids(item[1])
+    return ids
+
+
+def add_missing_aggregates(data):
+    api = simple_wbd.IndicatorAPI()
+    countries = api.get_countries()
+    aggregate_codes = set(
+        [i.get("id") for i in countries if
+         i.get("region", {}).get("value") == "Aggregates"]
+    )
+    used_codes = _gather_used_ids(data)
+    missing_aggregates = aggregate_codes.difference(used_codes)
+    for code in sorted(missing_aggregates):
+        # 0,1 = Aggregates, 2,1 = Other
+        data[0][1][2][1].append(code)
+    return data
+
+
+def add_missing_countries(data):
+    api = simple_wbd.IndicatorAPI()
+    countries = api.get_countries()
+    country_codes = set(
+        [i.get("id") for i in countries if
+         i.get("region", {}).get("value") != "Aggregates"]
+    )
+    for code in sorted(country_codes):
+        # 1,1 = Countries
+        data[1][1].append(code)
+    return data
+
+
+def generate_country_map():
+    api = simple_wbd.IndicatorAPI()
+    countries = api.get_countries()
+    return {c["id"]: c for c in countries}
+
+
+def _generate_country_dict(data):
+    country_map = generate_country_map()
+    country_dict = OrderedDict()
+
+    for item in data:
+        if isinstance(item, tuple):
+            country_dict[item[0]] = _generate_country_dict(item[1])
+        elif item in country_map:
+            country_dict[item] = country_map[item]
+        else:
+            logger.info("Missing country item: %s", item)
+    return country_dict
+
+
+def get_countries_regions_dict():
+    data = copy.deepcopy(_data_structure)
+    data = add_missing_aggregates(data)
+    data = add_missing_countries(data)
+    return _generate_country_dict(data)
+
 
 
 # for a,b in get_countries_dict().items():
