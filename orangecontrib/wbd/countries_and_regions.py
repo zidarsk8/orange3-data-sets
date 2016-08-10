@@ -87,11 +87,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         self._busy = False
         self._api = simple_wbd.IndicatorAPI()
         self._init_view()
-        self._init_data()
         self._init_listeners()
-
-    def _init_data(self):
-        self._set_data()
 
     def _init_listeners(self):
         self.itemChanged.connect(self.selection_changed)
@@ -151,14 +147,10 @@ class CountryTreeWidget(QtGui.QTreeWidget):
                 item.setExpanded(False)
             self._collapse_items(item)
 
-    def _set_data(self):
+    def set_data(self, data):
         self._busy = True
         self.clear()
-        from orangecontrib.wbd import countries
-
-        self._country_dict = countries.get_countries_regions_dict()
-        self._fill_values(self._country_dict)
-
+        self._fill_values(data)
         self.expandAll()
         self._collapse_items()
 
