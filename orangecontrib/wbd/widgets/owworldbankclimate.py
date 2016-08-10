@@ -21,7 +21,6 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
-from orangecontrib.wbd.indicators_list import IndicatorsTreeView
 from orangecontrib.wbd import api_wrapper
 from orangecontrib.wbd import countries
 
@@ -47,23 +46,29 @@ class OWWorldBankClimate(widget.OWWidget):
         (2, "Featured"),
     ])
 
-    settingsList = ["indicator_list_selection", "mergeSpots", "country_selection",
-                    "indicator_selection"
-                    "splitterSettings", "currentGds", "auto_commit",
-                    "datasetNames", "output_type"]
+    settingsList = [
+        "auto_commit",
+        "country_selection",
+        "indicator_list_selection",
+        "indicator_selection",
+        "mergeSpots",
+        "output_type"
+        "splitterSettings",
+    ]
 
     country_selection = Setting({})
     indicator_selection = Setting([])
     indicator_list_selection = Setting(True)
     output_type = Setting(True)
     mergeSpots = Setting(True)
-    datasetNames = Setting({})
     auto_commit = Setting(False)
 
-    splitterSettings = Setting(
-        (b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xea\x00\x00\x00\xd7\x01\x00\x00\x00\x07\x01\x00\x00\x00\x02',  # noqa
-         b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xb5\x00\x00\x02\x10\x01\x00\x00\x00\x07\x01\x00\x00\x00\x01')  # noqa
-    )
+    splitterSettings = Setting((
+        b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xea\x00'
+        b'\x00\x00\xd7\x01\x00\x00\x00\x07\x01\x00\x00\x00\x02',
+        b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xb5\x00'
+        b'\x00\x02\x10\x01\x00\x00\x00\x07\x01\x00\x00\x00\x01'
+    ))
 
     def __init__(self):
         super().__init__()
@@ -116,7 +121,6 @@ class OWWorldBankClimate(widget.OWWidget):
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
-
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
@@ -177,7 +181,6 @@ class OWWorldBankClimate(widget.OWWidget):
         progress_task.exceptionReady.connect(self._dataset_progress_exception)
         self._executor.submit(progress_task)
 
-
         country_codes = [k for k, v in self.country_selection.items()
                          if v == 2 and len(str(k)) == 3]
         if len(country_codes) > 250:
@@ -220,7 +223,7 @@ class OWWorldBankClimate(widget.OWWidget):
             if indicator_pages > 0 and indicators > 0:
                 progress = (
                     ((100 / indicators) * (current_indicator - 1)) +
-                    (100 / indicators) * (current_page/ indicator_pages)
+                    (100 / indicators) * (current_page / indicator_pages)
                 )
                 logger.debug("calculated progress: %s", progress)
                 set_progress(math.floor(progress))
@@ -251,4 +254,3 @@ def main():  # pragma: no cover
 
 if __name__ == "__main__":
     main()
-
