@@ -47,10 +47,17 @@ class OWWorldBankIndicators(widget.OWWidget):
         (2, "Featured"),
     ])
 
-    settingsList = ["indicator_list_selection", "mergeSpots", "country_selection",
-                    "indicator_selection"
-                    "splitterSettings", "currentGds", "auto_commit",
-                    "datasetNames", "output_type"]
+    settingsList = [
+        "indicator_list_selection",
+        "mergeSpots",
+        "country_selection",
+        "indicator_selection",
+        "splitterSettings",
+        "currentGds",
+        "auto_commit",
+        "datasetNames",
+        "output_type",
+    ]
 
     country_selection = Setting({})
     indicator_selection = Setting([])
@@ -60,10 +67,12 @@ class OWWorldBankIndicators(widget.OWWidget):
     datasetNames = Setting({})
     auto_commit = Setting(False)
 
-    splitterSettings = Setting(
-        (b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xea\x00\x00\x00\xd7\x01\x00\x00\x00\x07\x01\x00\x00\x00\x02',  # noqa
-         b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xb5\x00\x00\x02\x10\x01\x00\x00\x00\x07\x01\x00\x00\x00\x01')  # noqa
-    )
+    splitterSettings = Setting((
+        b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xea'
+        b'\x00\x00\x00\xd7\x01\x00\x00\x00\x07\x01\x00\x00\x00\x02',
+        b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xb5'
+        b'\x00\x00\x02\x10\x01\x00\x00\x00\x07\x01\x00\x00\x00\x01'
+    ))
 
     def __init__(self):
         super().__init__()
@@ -92,7 +101,8 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         indicator_filter_box = gui.widgetBox(self.controlArea, "Indicators",
                                              addSpace=True)
-        gui.radioButtonsInBox(indicator_filter_box, self, "indicator_list_selection",
+        gui.radioButtonsInBox(indicator_filter_box, self,
+                              "indicator_list_selection",
                               self.indicator_list_map.values(), "Rows",
                               callback=self.indicator_list_selected)
         self.indicator_list_selection = 2
@@ -218,7 +228,6 @@ class OWWorldBankIndicators(widget.OWWidget):
         progress_task.exceptionReady.connect(self._dataset_progress_exception)
         self._executor.submit(progress_task)
 
-
         country_codes = [k for k, v in self.country_selection.items()
                          if v == 2 and len(str(k)) == 3]
         if len(country_codes) > 250:
@@ -261,7 +270,7 @@ class OWWorldBankIndicators(widget.OWWidget):
             if indicator_pages > 0 and indicators > 0:
                 progress = (
                     ((100 / indicators) * (current_indicator - 1)) +
-                    (100 / indicators) * (current_page/ indicator_pages)
+                    (100 / indicators) * (current_page / indicator_pages)
                 )
                 logger.debug("calculated progress: %s", progress)
                 set_progress(math.floor(progress))
