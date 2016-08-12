@@ -137,7 +137,8 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self.setRootIsDecorated(False)
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         # if not multi_select:
-        self.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        #self.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
 
         linkdelegate = gui.LinkStyledItemDelegate(self)
         self.setItemDelegateForColumn(1, linkdelegate)
@@ -150,6 +151,7 @@ class IndicatorsTreeView(QtGui.QTreeView):
         self.setModel(proxy_model)
         self.selectionModel().selectionChanged.connect(self._update_selection)
         self.viewport().setMouseTracking(True)
+
 
         self._executor = concurrent.ThreadExecutor()
         self.fetch_indicators()
