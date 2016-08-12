@@ -115,8 +115,8 @@ class ClimateDataset(simple_wbd.ClimateDataset):
         filter_ = [ind for ind, col in enumerate(data[1:,:].T) if any(col)]
         return data[:,filter_]
 
-    def _country_table(self):
-        data = self.as_np_array()
+    def _country_table(self, **kwargs):
+        data = self.as_np_array(**kwargs)
         if data.shape[0] < 2:
             return None
         alpha3_map = countries.get_alpha3_map()
@@ -135,8 +135,9 @@ class ClimateDataset(simple_wbd.ClimateDataset):
         domain = Orange.data.Domain(colum_domains, metas=meta_domains)
         return Orange.data.Table(domain, data_columns, metas=meta_columns)
 
-    def _time_series_table(self):
-        data = self.as_np_array(columns=["country", "type"], use_dates=True)
+    def _time_series_table(self, **kwargs):
+        data = self.as_np_array(columns=["country", "type"], use_dates=True,
+                                **kwargs)
         if data.shape[0] < 2:
             return None
         alpha3_map = countries.get_alpha3_map()
@@ -156,11 +157,11 @@ class ClimateDataset(simple_wbd.ClimateDataset):
         domain = Orange.data.Domain(colum_domains, metas=meta_domains)
         return Orange.data.Table(domain, data_columns, metas=meta_columns)
 
-    def as_orange_table(self, time_series=False):
+    def as_orange_table(self, time_series=False, **kwargs):
         if time_series:
-            return self._time_series_table()
+            return self._time_series_table(**kwargs)
         else:
-            return self._country_table()
+            return self._country_table(**kwargs)
 
 
 class ClimateAPI(simple_wbd.ClimateAPI):

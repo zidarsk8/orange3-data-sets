@@ -81,8 +81,9 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         "EMU": "High Income Euro area",
     }
 
-    def __init__(self, parent, selection_list):
+    def __init__(self, parent, selection_list, commit_callback=None):
         super().__init__(parent)
+        self._commit_callback = commit_callback
         self._selection_list = selection_list
         self._busy = False
         self._api = simple_wbd.IndicatorAPI()
@@ -110,6 +111,8 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         state = item.checkState(0)
         self._selection_list[item.key] = state
         logger.debug("Selection for item '%s' set to %s", item.key, state)
+        if self._commit_callback:
+            self._commit_callback()
 
 
     def _fill_values(self, data, parent=None):

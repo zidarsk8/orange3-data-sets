@@ -10,6 +10,7 @@ import math
 import signal
 import logging
 import collections
+import requests
 from functools import partial
 
 from PyQt4 import QtGui
@@ -40,7 +41,7 @@ class OWWorldBankClimate(widget.OWWidget):
         "Data", table.Table,
         doc="Attribute-valued data set read from the input file.")]
 
-    indicator_list_map = collections.OrderedDict([
+    climate_list_map = collections.OrderedDict([
         (0, "All"),
         (1, "Common"),
         (2, "Featured"),
@@ -49,17 +50,16 @@ class OWWorldBankClimate(widget.OWWidget):
     settingsList = [
         "auto_commit",
         "locations",
-        "indicator_list_selection",
         "mergeSpots",
         "output_type"
         "splitterSettings",
     ]
 
     locations = Setting({})
-    indicator_list_selection = Setting(True)
     output_type = Setting(True)
     mergeSpots = Setting(True)
     auto_commit = Setting(False)
+    use_country_names = Setting(False)
 
     include_intervals = Setting([])
     include_data_types = Setting([])
@@ -135,13 +135,22 @@ class OWWorldBankClimate(widget.OWWidget):
         self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
         self.info_data = collections.OrderedDict([
-            ("Server Status", None),
-            ("Indicators", None),
-            ("Rows", None),
-            ("Columns", None),
+            ("Server status", None),
+            ("Selected countries", None),
+            ("Warning", None),
         ])
 
         self._init_layout()
+        self.print_selection_count()
+        self._check_server_status()
+
+    def print_selection_count(self):
+        self.info_data["Selected countries"] = 0
+        if self.locations:
+            self.info_data["Selected countries"] = len(
+                [k for k, v in self.locations.items()
+                 if v == 2 and len(str(k)) == 3])
+        self.print_info()
 
     def _init_layout(self):
         """Initialize widget layout."""
@@ -151,18 +160,27 @@ class OWWorldBankClimate(widget.OWWidget):
         self._info_label = gui.widgetLabel(info_box, "Initializing\n\n")
 
         box = gui.vBox(self.controlArea, "Average intervals:")
-        self.ch_month = gui.checkBox(box, self, "include_month", "Month")
-        self.ch_year = gui.checkBox(box, self, "include_year", 'Year')
-        self.ch_decade = gui.checkBox(box, self, "include_decade", 'Decade')
+        self.ch_month = gui.checkBox(box, self, "include_month", "Month",
+                                     callback=self.commit_if)
+        self.ch_year = gui.checkBox(box, self, "include_year", 'Year',
+                                    callback=self.commit_if)
+        self.ch_decade = gui.checkBox(box, self, "include_decade", 'Decade',
+                                      callback=self.commit_if)
 
         box = gui.vBox(self.controlArea, "Data Types")
-        gui.checkBox(box, self, "include_temperature", "Temperature")
-        gui.checkBox(box, self, "include_precipitation", 'Precipitation')
+        gui.checkBox(box, self, "include_temperature", "Temperature",
+                     callback=self.commit_if)
+        gui.checkBox(box, self, "include_precipitation", 'Precipitation',
+                     callback=self.commit_if)
 
         output_box = gui.widgetBox(self.controlArea, "Output", addSpace=True)
         gui.radioButtonsInBox(output_box, self, "output_type",
                               ["Countries", "Time Series"], "Rows",
                               callback=self.output_type_selected)
+
+        gui.checkBox(output_box, self, "use_country_names", "Use Country names",
+                     callback=self.commit_if)
+
         self.output_type = 0
 
         gui.separator(output_box)
@@ -176,7 +194,7 @@ class OWWorldBankClimate(widget.OWWidget):
 
         box = gui.widgetBox(self.mainArea, "Countries")
         self.country_tree = CountryTreeWidget(
-            self.mainArea, self.locations)
+            self.mainArea, self.locations, commit_callback=self.commit_if)
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
@@ -187,9 +205,6 @@ class OWWorldBankClimate(widget.OWWidget):
         self.progressBarValue = value
         if value == 100:
             self.progressBarFinished()
-
-    def filter_indicator_list(self):
-        pass
 
     def output_type_selected(self):
         logger.debug("output type set to: %s", self.output_type)
@@ -204,21 +219,29 @@ class OWWorldBankClimate(widget.OWWidget):
             self.ch_decade.setEnabled(True)
             self.ch_month.setEnabled(True)
             self.ch_year.setEnabled(True)
-
-    def basic_indicator_filter(self):
-        return self.indicator_list_map.get(self.indicator_list_selection)
-
-    def indicator_list_selected(self):
-        value = self.basic_indicator_filter()
-        logger.debug("Indicator list selected: %s", value)
-        self.indicator_widget.fetch_indicators()
+        self.commit_if()
 
     def _splitter_moved(self, *args):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
+    def _check_big_selection(self):
+        types = len(self.include_data_types) if self.include_data_types else 2
+        intervals = len(self.include_intervals) if self.include_intervals else 2
+        country_codes = [k for k, v in self.locations.items()
+                         if v == 2 and len(str(k)) == 3]
+        countries = len(country_codes)
+        if types * intervals * countries > 100:
+            self.info_data[
+                "Warning"] = "Fetching data\nmight take a few minutes."
+        else:
+            self.info_data["Warning"] = None
+        self.print_info()
+
     def commit_if(self):
         logger.debug("Commit If - auto_commit: %s", self.auto_commit)
+        self._check_big_selection()
+        self.print_selection_count()
         if self.auto_commit:
             self.commit()
         else:
@@ -254,14 +277,13 @@ class OWWorldBankClimate(widget.OWWidget):
                          if v == 2 and len(str(k)) == 3]
 
         logger.debug("Fetch: selected country codes: %s", country_codes)
-        # country_codes = country_codes[:20]
-        indicator_dataset = self._api.get_instrumental(
+        climate_dataset = self._api.get_instrumental(
             country_codes,
             data_types=self.include_data_types,
             intervals=self.include_intervals
         )
         self._set_progress_flag = False
-        return indicator_dataset
+        return climate_dataset
 
     def _fetch_dataset_finished(self):
         assert self.thread() is QtCore.QThread.currentThread()
@@ -272,13 +294,23 @@ class OWWorldBankClimate(widget.OWWidget):
         if self._fetch_task is None:
             return
 
-        indicator_dataset = self._fetch_task.result()
+        climate_dataset = self._fetch_task.result()
         time_series = self.output_type == 1
-        data_table = indicator_dataset.as_orange_table(time_series=time_series)
-        self.info_data["Rows"] = data_table.n_rows
+        data_table = climate_dataset.as_orange_table(
+            time_series=time_series,
+            use_names=self.use_country_names,
+        )
 
         self.print_info()
         self.send("Data", data_table)
+
+    def _check_server_status(self):
+        try:
+            requests.get('http://api.worldbank.org', timeout=1)
+            self.info_data["Server status"] = "Up"
+        except requests.exceptions.Timeout:
+            self.info_data["Server status"] = "Down"
+        self.print_info()
 
     @staticmethod
     def _fetch_dataset_exception(exception):
