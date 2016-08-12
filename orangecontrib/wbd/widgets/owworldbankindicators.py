@@ -10,6 +10,7 @@ import math
 import signal
 import logging
 import collections
+import requests
 from functools import partial
 
 from PyQt4 import QtGui
@@ -84,13 +85,14 @@ class OWWorldBankIndicators(widget.OWWidget):
         self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
         self.info_data = collections.OrderedDict([
-            ("Server Status", None),
+            ("Server status", None),
             ("Indicators", None),
             ("Rows", None),
             ("Columns", None),
         ])
 
         self._init_layout()
+        self._check_server_status()
 
     def _init_layout(self):
         """Initialize widget layout."""
@@ -163,6 +165,14 @@ class OWWorldBankIndicators(widget.OWWidget):
         # self.resize(2000, 600)  # why does this not work
 
         self.progressBarInit()
+
+    def _check_server_status(self):
+        try:
+            requests.get('http://api.worldbank.org', timeout=1)
+            self.info_data["Server status"] = "Up"
+        except requests.exceptions.Timeout:
+            self.info_data["Server status"] = "Down"
+        self.print_info()
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
