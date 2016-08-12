@@ -107,7 +107,10 @@ class CountryTreeWidget(QtGui.QTreeWidget):
     def selection_changed(self, item, column):
         if self._busy:
             return
-        self._selection_list[item.key] = item.checkState(0)
+        state = item.checkState(0)
+        self._selection_list[item.key] = state
+        logger.debug("Selection for item '%s' set to %s", item.key, state)
+
 
     def _fill_values(self, data, parent=None):
         if not parent:

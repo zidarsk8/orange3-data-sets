@@ -394,6 +394,14 @@ def _order_countries_dict(countries):
     return OrderedDict(sorted(countries.items(), key=lambda x: x[1]["name"]))
 
 
+def get_alpha3_map():
+    """Get mappings from alpha3 codes to country names."""
+    name_map = {v: k for k, v in MAPPINGS.items()}
+    return {c.alpha3: name_map.get(c.name, c.name)
+            for c in pycountry.countries}
+
+
+
 def get_countries_dict():
     result = defaultdict(dict)
     alpha_map = {c.name: c.alpha3 for c in pycountry.countries}
@@ -473,6 +481,3 @@ def get_countries_regions_dict():
 
 
 
-# for a,b in get_countries_dict().items():
-#     for x,y in b.items():
-#         print(a,x,y)

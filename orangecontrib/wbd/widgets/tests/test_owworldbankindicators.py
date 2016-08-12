@@ -7,14 +7,20 @@ from PyQt4 import QtCore
 import mock
 from datetime import date
 from orangecontrib.wbd.widgets import owworldbankindicators
+from concurrent.futures import wait
 
 
 class TestWorldBankDataWidget(unittest.TestCase):
 
     """Tests for simple filter widget."""
-    def test_click_events(self, _, ok_event, fetch_event):
+    def test_click_events(self):
         """Test calling callbacks on return press in the filter_text."""
+        print("AAAAAA")
         widget = owworldbankindicators.OWWorldBankIndicators()
+        print("AAAAAA")
+
+        f = widget._executor._futeres + widget.indicator_widget._executor._futeres
+        wait(f)
 
     # @mock.patch("orangecontrib.wbd.widgets.mywidget.WorldBankDataWidget"
     #             ".fetch_button_clicked")

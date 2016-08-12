@@ -33,8 +33,8 @@ class OWWorldBankClimate(widget.OWWidget):
 
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "World Bank Indicators"
-    icon = "icons/wb_icon.png"
+    name = "WB Climate"
+    icon = "icons/climate.png"
     category = "Data Sets"
     outputs = [widget.OutputSignal(
         "Data", table.Table,
@@ -48,20 +48,75 @@ class OWWorldBankClimate(widget.OWWidget):
 
     settingsList = [
         "auto_commit",
-        "country_selection",
+        "locations",
         "indicator_list_selection",
-        "indicator_selection",
         "mergeSpots",
         "output_type"
         "splitterSettings",
     ]
 
-    country_selection = Setting({})
-    indicator_selection = Setting([])
+    locations = Setting({})
     indicator_list_selection = Setting(True)
     output_type = Setting(True)
     mergeSpots = Setting(True)
     auto_commit = Setting(False)
+
+    include_intervals = Setting([])
+    include_data_types = Setting([])
+
+    def _data_type_setter(self, name, value):
+        intervals = set(self.include_data_types) | {name}
+        if not value:
+            intervals.remove(name)
+        self.include_data_types = list(intervals)
+        logger.debug("New intervals: %s", self.include_data_types)
+
+    def _interval_setter(self, name, value):
+        intervals = set(self.include_intervals) | {name}
+        if not value:
+            intervals.remove(name)
+        self.include_intervals = list(intervals)
+        logger.debug("New intervals: %s", self.include_intervals)
+
+    @property
+    def include_month(self):
+        return "month" in self.include_intervals
+
+    @include_month.setter
+    def include_month(self, value):
+        self._interval_setter("month", value)
+
+    @property
+    def include_year(self):
+        return "year" in self.include_intervals
+
+    @include_year.setter
+    def include_year(self, value):
+        self._interval_setter("year", value)
+
+    @property
+    def include_decade(self):
+        return "decade" in self.include_intervals
+
+    @include_decade.setter
+    def include_decade(self, value):
+        self._interval_setter("decade", value)
+
+    @property
+    def include_temperature(self):
+        return "tas" in self.include_data_types
+
+    @include_temperature.setter
+    def include_temperature(self, value):
+        self._data_type_setter("tas", value)
+
+    @property
+    def include_precipitation(self):
+        return "pr" in self.include_data_types
+
+    @include_precipitation.setter
+    def include_precipitation(self, value):
+        self._data_type_setter("pr", value)
 
     splitterSettings = Setting((
         b'\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x01\xea\x00'
@@ -73,7 +128,7 @@ class OWWorldBankClimate(widget.OWWidget):
     def __init__(self):
         super().__init__()
         logger.debug("Initializing {}".format(self.__class__.__name__))
-        self._api = api_wrapper.IndicatorAPI()
+        self._api = api_wrapper.ClimateAPI()
         self.dataset_params = None
         self.datasetName = ""
         self.selection_changed = False
@@ -95,10 +150,14 @@ class OWWorldBankClimate(widget.OWWidget):
         info_box = gui.widgetBox(self.controlArea, "Info", addSpace=True)
         self._info_label = gui.widgetLabel(info_box, "Initializing\n\n")
 
-        data_type_filter_box = gui.widgetBox(self.controlArea, "Indicators",
-                                             addSpace=True)
+        box = gui.vBox(self.controlArea, "Average intervals:")
+        self.ch_month = gui.checkBox(box, self, "include_month", "Month")
+        self.ch_year = gui.checkBox(box, self, "include_year", 'Year')
+        self.ch_decade = gui.checkBox(box, self, "include_decade", 'Decade')
 
-        gui.separator(data_type_filter_box)
+        box = gui.vBox(self.controlArea, "Data Types")
+        gui.checkBox(box, self, "include_temperature", "Temperature")
+        gui.checkBox(box, self, "include_precipitation", 'Precipitation')
 
         output_box = gui.widgetBox(self.controlArea, "Output", addSpace=True)
         gui.radioButtonsInBox(output_box, self, "output_type",
@@ -117,7 +176,7 @@ class OWWorldBankClimate(widget.OWWidget):
 
         box = gui.widgetBox(self.mainArea, "Countries")
         self.country_tree = CountryTreeWidget(
-            self.mainArea, self.country_selection)
+            self.mainArea, self.locations)
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
         self._annotationsUpdating = False
@@ -133,7 +192,18 @@ class OWWorldBankClimate(widget.OWWidget):
         pass
 
     def output_type_selected(self):
-        pass
+        logger.debug("output type set to: %s", self.output_type)
+        if self.output_type == 1:  # Time series
+            self.ch_decade.setEnabled(False)
+            self.ch_month.setEnabled(False)
+            self.ch_year.setEnabled(False)
+            self.include_year = True
+            self.include_month = False
+            self.include_decade = False
+        else:
+            self.ch_decade.setEnabled(True)
+            self.ch_month.setEnabled(True)
+            self.ch_year.setEnabled(True)
 
     def basic_indicator_filter(self):
         return self.indicator_list_map.get(self.indicator_list_selection)
@@ -177,18 +247,19 @@ class OWWorldBankClimate(widget.OWWidget):
             concurrent.methodinvoke(self, "set_progress", (float,))
         )
         progress_task = concurrent.Task(function=func)
-        progress_task.finished.connect(self._dataset_progress_finished)
         progress_task.exceptionReady.connect(self._dataset_progress_exception)
         self._executor.submit(progress_task)
 
-        country_codes = [k for k, v in self.country_selection.items()
+        country_codes = [k for k, v in self.locations.items()
                          if v == 2 and len(str(k)) == 3]
-        if len(country_codes) > 250:
-            country_codes = None
+
         logger.debug("Fetch: selected country codes: %s", country_codes)
-        logger.debug("Fetch: selected indicators: %s", self.indicator_selection)
-        indicator_dataset = self._api.get_dataset(self.indicator_selection,
-                                                  countries=country_codes)
+        # country_codes = country_codes[:20]
+        indicator_dataset = self._api.get_instrumental(
+            country_codes,
+            data_types=self.include_data_types,
+            intervals=self.include_intervals
+        )
         self._set_progress_flag = False
         return indicator_dataset
 
@@ -215,24 +286,17 @@ class OWWorldBankClimate(widget.OWWidget):
 
     def _dataset_progress(self, set_progress=None):
         while self._set_progress_flag:
-            indicators = self._api.progress["indicators"]
-            current_indicator = self._api.progress["current_indicator"]
-            indicator_pages = self._api.progress["indicator_pages"]
+            pages = self._api.progress["pages"]
             current_page = self._api.progress["current_page"]
             logger.debug("api progress: %s", self._api.progress)
-            if indicator_pages > 0 and indicators > 0:
-                progress = (
-                    ((100 / indicators) * (current_indicator - 1)) +
-                    (100 / indicators) * (current_page / indicator_pages)
-                )
+            if pages > 0:
+                progress = ((100 / pages) * (current_page - 1))
                 logger.debug("calculated progress: %s", progress)
                 set_progress(math.floor(progress))
             time.sleep(1)
 
-    def _dataset_progress_finished(self):
-        pass
-
-    def _dataset_progress_exception(self, exception):
+    @staticmethod
+    def _dataset_progress_exception(exception):
         logger.exception(exception)
 
     def print_info(self):

@@ -34,7 +34,7 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "World Bank Indicators"
+    name = "WB Indicators"
     icon = "icons/wb_icon.png"
     category = "Data Sets"
     outputs = [widget.OutputSignal(

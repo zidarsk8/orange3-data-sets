@@ -214,6 +214,9 @@ class IndicatorsTreeView(QtGui.QTreeView):
     def _fetch_indicators(self, progress=lambda val: None):
 
         progress(0)
+        import time
+        time.sleep(2)
+        print("AAAAAAAAAAAAAAA")
 
         def row_item(display_value, item_values={}):
             item = QtGui.QStandardItem()

@@ -12,6 +12,7 @@ import numpy
 
 import Orange
 import simple_wbd
+from orangecontrib.wbd import countries
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +83,10 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
         domain = Orange.data.Domain(colum_domains, metas=meta_domains)
         return Orange.data.Table(domain, data_columns, metas=meta_columns)
 
-    def as_np_array(self, time_series=False, add_metadata=False):
+    def as_np_array(self, time_series=False, add_metadata=False, **kwargs):
         data = numpy.array(self.as_list(time_series=time_series,
-                                        add_metadata=add_metadata))
+                                        add_metadata=add_metadata,
+                                        **kwargs))
 
         # list of column indexes that have at least one non zero value
         filter_ = [ind for ind, col in enumerate(data[1:,:].T) if any(col)]
@@ -98,12 +100,71 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
 
 
 class IndicatorAPI(simple_wbd.IndicatorAPI):
-    """Simple filter widget with filter callbacks.
-
-    This is a simple widget with filter text, text area and okay button. The
-    widget listens for return pressed or ok button click to call the callbacks
-    with the entered filter text.
-    """
+    """Wrapper for Indicator API to use the extended data set."""
 
     def __init__(self):
         super().__init__(IndicatorDataset)
+
+
+class ClimateDataset(simple_wbd.ClimateDataset):
+
+    def as_np_array(self, **kwargs):
+        data = numpy.array(self.as_list(**kwargs))
+
+        # list of column indexes that have at least one non zero value
+        filter_ = [ind for ind, col in enumerate(data[1:,:].T) if any(col)]
+        return data[:,filter_]
+
+    def _country_table(self):
+        data = self.as_np_array()
+        if data.shape[0] < 2:
+            return None
+        alpha3_map = countries.get_alpha3_map()
+        meta_columns = data[1:,:1]
+        data_columns = data[1:,1:]
+        for row in meta_columns:
+            row[0] = alpha3_map.get(row[0], row[0])
+
+        meta_domains = [Orange.data.StringVariable(name)
+                        for name in data[0, :1]]
+        colum_domains = [Orange.data.ContinuousVariable(column_name)
+                         for column_name in data[0, 1:]]
+
+        logger.debug("Generated Orange table of size: %s", data.shape)
+
+        domain = Orange.data.Domain(colum_domains, metas=meta_domains)
+        return Orange.data.Table(domain, data_columns, metas=meta_columns)
+
+    def _time_series_table(self):
+        data = self.as_np_array(columns=["country", "type"], use_dates=True)
+        if data.shape[0] < 2:
+            return None
+        alpha3_map = countries.get_alpha3_map()
+        meta_columns = [[time.mktime(date_.timetuple()) if date_ else None]
+                        for date_ in data[1:,0]]
+        data_columns = data[1:,1:]
+        for row in meta_columns:
+            row[0] = alpha3_map.get(row[0], row[0])
+
+        meta_domains = [Orange.data.TimeVariable(name)
+                        for name in data[0, :1]]
+        colum_domains = [Orange.data.ContinuousVariable(column_name)
+                         for column_name in data[0, 1:]]
+
+        logger.debug("Generated Orange table of size: %s", data.shape)
+
+        domain = Orange.data.Domain(colum_domains, metas=meta_domains)
+        return Orange.data.Table(domain, data_columns, metas=meta_columns)
+
+    def as_orange_table(self, time_series=False):
+        if time_series:
+            return self._time_series_table()
+        else:
+            return self._country_table()
+
+
+class ClimateAPI(simple_wbd.ClimateAPI):
+    """Wrapper for Climate API to use the extended data set."""
+
+    def __init__(self):
+        super().__init__(ClimateDataset)
