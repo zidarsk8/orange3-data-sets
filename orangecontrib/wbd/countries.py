@@ -1,16 +1,27 @@
+"""Module for generating countries and region lists.
+
+This module has all the helper functions for generating proper structures for
+CountryTreeWidget.
+
+The three main exposed functions are:
+    get_countries_dict - Used in climate widget.
+    get_countries_regions_dict - Used in indicator widget.
+    get_alpha3_map - used for changing alpha3 codes to country names.
+"""
 import copy
-import pycountry
 import logging
 from collections import defaultdict
 from collections import OrderedDict
 
+import pycountry
 import simple_wbd
 
 logger = logging.getLogger(__name__)
 
 MAPPINGS = {
     # Africa
-    "Democratic Republic of the Congo": 'Congo, The Democratic Republic of the',
+    "Democratic Republic of the Congo": ("Congo, The Democratic Republic of "
+                                         "the"),
     "Ivory Coast": "Côte d'Ivoire",
     "Tanzania": "Tanzania, United Republic of",
     "Iran": "Iran, Islamic Republic of",
@@ -326,7 +337,7 @@ COUNTRIES = {
     ],
 }
 
-_data_structure = [
+DATA_STRUCTURE = [
     ("Aggregates", [
         ("Income Levels", [
             "LIC",  # "Low income"
@@ -401,8 +412,8 @@ def get_alpha3_map():
             for c in pycountry.countries}
 
 
-
 def get_countries_dict():
+    """Get a dict of all all country codes and names grouped by continent."""
     result = defaultdict(dict)
     alpha_map = {c.name: c.alpha3 for c in pycountry.countries}
     for continent, countries in COUNTRIES.items():
@@ -411,8 +422,8 @@ def get_countries_dict():
                 "name": country
             }
     result = {k: _order_countries_dict(v) for k, v in result.items()}
-    result = OrderedDict(sorted(result.items(), key=lambda t: t[0]))
-    return result
+    ordered_result = OrderedDict(sorted(result.items(), key=lambda t: t[0]))
+    return ordered_result
 
 
 def _gather_used_ids(items):
@@ -425,7 +436,13 @@ def _gather_used_ids(items):
     return ids
 
 
-def add_missing_aggregates(data):
+def _add_missing_aggregates(data):
+    """Add any missing aggregates to data.
+
+    The data structure might be missing any newly added aggregates from the
+    API. This function will add all of those under the other section of
+    aggregates list.
+    """
     api = simple_wbd.IndicatorAPI()
     countries = api.get_countries()
     aggregate_codes = set(
@@ -440,7 +457,8 @@ def add_missing_aggregates(data):
     return data
 
 
-def add_missing_countries(data):
+def _add_missing_countries(data):
+    """Add all countries from the API to country data."""
     api = simple_wbd.IndicatorAPI()
     countries = api.get_countries()
     country_codes = set(
@@ -453,14 +471,15 @@ def add_missing_countries(data):
     return data
 
 
-def generate_country_map():
+def _generate_country_map():
     api = simple_wbd.IndicatorAPI()
     countries = api.get_countries()
     return {c["id"]: c for c in countries}
 
 
 def _generate_country_dict(data):
-    country_map = generate_country_map()
+    """Turn the country and region structure into an ordered dict."""
+    country_map = _generate_country_map()
     country_dict = OrderedDict()
 
     for item in data:
@@ -474,10 +493,8 @@ def _generate_country_dict(data):
 
 
 def get_countries_regions_dict():
-    data = copy.deepcopy(_data_structure)
-    data = add_missing_aggregates(data)
-    data = add_missing_countries(data)
+    """Get country and region data for indicators widget."""
+    data = copy.deepcopy(DATA_STRUCTURE)
+    data = _add_missing_aggregates(data)
+    data = _add_missing_countries(data)
     return _generate_country_dict(data)
-
-
-

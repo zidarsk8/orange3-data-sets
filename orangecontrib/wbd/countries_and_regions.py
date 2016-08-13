@@ -1,11 +1,13 @@
 """Module contains countries and regions tree widget."""
 
+import collections
 import logging
 
 import simple_wbd
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-import collections
+
+from orangecontrib.wbd import countries
 
 logger = logging.getLogger(__name__)
 
@@ -18,68 +20,6 @@ class CountryTreeWidget(QtGui.QTreeWidget):
     Groups were taken from:
         https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
     """
-
-    _data_structure = [
-        ("Aggregates", [
-            ("Income Levels", [
-                "LIC",  # "Low income"
-                "MIC",  # "Middle income",
-                "LMC",  # "Lower middle income",
-                "UMC",  # "Upper middle income",
-                "HIC",  # "High income",
-            ]),
-            ("Regions", [
-                "EAS",  # "East Asia & Pacific (all income levels)",
-                "ECS",  # "Europe & Central Asia (all income levels)",
-                "LCN",  # "Latin America & Caribbean (all income levels)",
-                "MEA",  # "Middle East & North Africa (all income levels)",
-                "NAC",  # "North America",
-                "SAS",  # "South Asia",
-                "SSF",  # "Sub-Saharan Africa (all income levels)",
-            ]),
-            ("Other", [
-                "WLD",  # "World",
-                "AFR",  # "Africa",
-                "ARB",  # "Arab World",
-                ("Low & middle income", [
-                    "LMY",  # "All low and middle income regions",
-                    "EAP",  # "East Asia & Pacific (developing only)",
-                    "ECA",  # "Europe & Central Asia (developing only)",
-                    "LAC",  # "Latin America & Caribbean (developing only)",
-                    "MNA",  # "Middle East & North Africa (developing only)",
-                    "SSA",  # "Sub-Saharan Africa (developing only)",
-                ]),
-                "EMU",  # other high income areas don't exist anymore
-                # ("High income", [
-                #     "EMU",  # "Euro area",
-                #     "OEC",  # "High income: OECD",
-                #     "NOC",  # "High income: nonOECD",
-                # ]),
-                "CEB",  # "Central Europe and the Baltics",
-                "EUU",  # "European Union",
-                "FCS",  # "Fragile and conflict affected situations",
-                "HPC",  # "Heavily indebted poor countries (HIPC)",
-                "IBD",  # "IBRD only",
-                "IBT",  # "IDA & IBRD total",
-                "IDB",  # "IDA blend",
-                "IDX",  # "IDA only",
-                "IDA",  # "IDA total",
-                "LDC",  # "Least developed countries: UN classification",
-                "OED",  # "OECD members",
-                ("Small states", [
-                    "SST",  # "All small states",
-                    "CSS",  # "Caribbean small states",
-                    "PSS",  # "Pacific island small states",
-                    "OSS",  # "Other small states",
-                ]),
-            ]),
-        ]),
-        ("Countries", []),
-    ]
-    RENAME_MAP = {
-        "SST": "All small states",
-        "EMU": "High Income Euro area",
-    }
 
     def __init__(self, parent, selection_list, commit_callback=None):
         super().__init__(parent)
@@ -105,7 +45,15 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         self.setHeaderLabels(["Regions and countries", "Code"])
         self.setRootIsDecorated(True)
 
-    def selection_changed(self, item, column):
+    def selection_changed(self, item, _):
+        """Country selection change handler.
+
+        This function updates the settings dict with the new selection and
+        triggers commit on change callback.
+
+        Args:
+            item: list item that has changed.
+        """
         if self._busy:
             return
         state = item.checkState(0)
@@ -114,7 +62,6 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         if self._commit_callback:
             self._commit_callback()
 
-
     def _fill_values(self, data, parent=None):
         if not parent:
             parent = self
@@ -122,7 +69,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
         defaults = self._selection_list
         for key, value in data.items():
-            name = self.RENAME_MAP.get(key, value.get("name", key))
+            name = countries.RENAME_MAP.get(key, value.get("name", key))
             display_key = "" if name == key else key
 
             item = QtGui.QTreeWidgetItem(parent, [name, display_key])
@@ -154,6 +101,12 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             self._collapse_items(item)
 
     def set_data(self, data):
+        """Fill the country and region list with new data.
+
+        Args:
+            data: dict of dictionaries. The last dictionary must contain a
+                field "name" which is displayed in the list.
+        """
         self._busy = True
         self.clear()
         self._fill_values(data)
