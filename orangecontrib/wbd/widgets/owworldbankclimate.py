@@ -9,16 +9,12 @@ import time
 import math
 import signal
 import logging
-import collections
-from functools import partial
 
 from PyQt4 import QtGui
-from PyQt4 import QtCore
 from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
-from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd import api_wrapper
@@ -168,21 +164,21 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
 
         gui.checkBox(output_box, self, "use_country_names",
                      "Use Country names", callback=self.commit_if)
-
         self.output_type = 0
 
+        # pylint: disable=duplicate-code
         gui.separator(output_box)
-
         gui.auto_commit(self.controlArea, self, "auto_commit", "Commit",
                         box="Commit")
-
         gui.rubber(self.controlArea)
 
         # Main area
-
         box = gui.widgetBox(self.mainArea, "Countries")
         self.country_tree = CountryTreeWidget(
-            self.mainArea, self.country_selection, commit_callback=self.commit_if)
+            self.mainArea,
+            self.country_selection,
+            commit_callback=self.commit_if
+        )
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
 
@@ -230,21 +226,12 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
         super().commit_if()
 
     def _fetch_dataset(self, set_progress=None):
+        """Fetch climate dataset."""
 
         set_progress(0)
+        self._start_progerss_task()
 
-        func = partial(
-            self._dataset_progress,
-            concurrent.methodinvoke(self, "set_progress", (float,))
-        )
-        progress_task = concurrent.Task(function=func)
-        progress_task.exceptionReady.connect(self._dataset_progress_exception)
-        self._executor.submit(progress_task)
-
-        # pylint: disable=no-member
-        # Settings instance can have items member if it is defined as dict.
-        country_codes = [k for k, v in self.country_selection.items()
-                         if v == 2 and len(str(k)) == 3]
+        country_codes = self.get_country_codes()
 
         logger.debug("Fetch: selected country codes: %s", country_codes)
         climate_dataset = self._api.get_instrumental(
@@ -255,28 +242,12 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
         self._set_progress_flag = False
         return climate_dataset
 
-    def _fetch_dataset_finished(self):
-        assert self.thread() is QtCore.QThread.currentThread()
-        self.setEnabled(True)
-        self._set_progress_flag = False
-        self.set_progress(100)
-
-        if self._fetch_task is None:
-            return
-
-        climate_dataset = self._fetch_task.result()
+    def _dataset_to_table(self, dataset):
         time_series = self.output_type == 1
-        data_table = climate_dataset.as_orange_table(
+        return dataset.as_orange_table(
             time_series=time_series,
             use_names=self.use_country_names,
         )
-
-        self.print_info()
-        self.send("Data", data_table)
-
-    @staticmethod
-    def _fetch_dataset_exception(exception):
-        logger.exception(exception)
 
     def _dataset_progress(self, set_progress=None):
         while self._set_progress_flag:
@@ -292,12 +263,6 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
     @staticmethod
     def _dataset_progress_exception(exception):
         logger.exception(exception)
-
-    def print_info(self):
-        """Refresh info in the info label."""
-        lines = ["{}: {}".format(k, v) for k, v in self.info_data.items()
-                 if v is not None]
-        self._info_label.setText("\n".join(lines))
 
 
 def main():  # pragma: no cover

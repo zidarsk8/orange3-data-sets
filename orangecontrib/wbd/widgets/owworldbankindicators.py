@@ -10,7 +10,6 @@ import math
 import signal
 import logging
 import collections
-from functools import partial
 
 from PyQt4 import QtGui
 from PyQt4 import QtCore
@@ -18,7 +17,6 @@ from Orange.data import table
 from Orange.widgets import widget
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
-from Orange.widgets.utils import concurrent
 
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd.indicators_list import IndicatorsTreeView
@@ -109,10 +107,9 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
         self.output_type = 0
 
         gui.separator(output_box)
-
+        # pylint: disable=duplicate-code
         gui.auto_commit(self.controlArea, self, "auto_commit", "Commit",
                         box="Commit")
-
         gui.rubber(self.controlArea)
 
         # Main area
@@ -185,16 +182,9 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
                                  for sp in self.splitters]
 
     def _fetch_dataset(self, set_progress=None):
-
+        """Fetch indicator dataset."""
         set_progress(0)
-
-        func = partial(
-            self._dataset_progress,
-            concurrent.methodinvoke(self, "set_progress", (float,))
-        )
-        progress_task = concurrent.Task(function=func)
-        progress_task.exceptionReady.connect(self._dataset_progress_exception)
-        self._executor.submit(progress_task)
+        self._start_progerss_task()
 
         country_codes = self.get_country_codes()
 
@@ -208,22 +198,9 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
         self._set_progress_flag = False
         return indicator_dataset
 
-    def _fetch_dataset_finished(self):
-        assert self.thread() is QtCore.QThread.currentThread()
-        self.setEnabled(True)
-        self._set_progress_flag = False
-        self.set_progress(100)
-
-        if self._fetch_task is None:
-            return
-
-        indicator_dataset = self._fetch_task.result()
+    def _dataset_to_table(self, dataset):
         time_series = self.output_type == 1
-        data_table = indicator_dataset.as_orange_table(time_series=time_series)
-        self.info_data["Rows"] = data_table.n_rows
-
-        self.print_info()
-        self.send("Data", data_table)
+        return dataset.as_orange_table(time_series=time_series)
 
     @staticmethod
     def _fetch_dataset_exception(exception):
@@ -255,12 +232,6 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
     def _dataset_progress_exception(self, exception):
         logger.exception(exception)
         self.print_info()
-
-    def print_info(self):
-        """Refresh info in the info label."""
-        lines = ["{}: {}".format(k, v) for k, v in self.info_data.items()
-                 if v is not None]
-        self._info_label.setText("\n".join(lines))
 
 
 def main():  # pragma: no cover
