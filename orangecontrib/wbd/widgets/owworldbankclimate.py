@@ -54,13 +54,13 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
 
     settingsList = [
         "auto_commit",
-        "locations",
+        "country_selection",
         "mergeSpots",
         "output_type"
         "splitterSettings",
     ]
 
-    locations = Setting({})
+    country_selection = Setting({})
     output_type = Setting(True)
     mergeSpots = Setting(True)
     auto_commit = Setting(False)
@@ -150,13 +150,8 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
 
     def print_selection_count(self):
         """Update info widget with new selection count."""
-        self.info_data["Selected countries"] = 0
-        # pylint: disable=no-member
-        # Settings instance can have items member if it is defined as dict.
-        if self.locations:
-            self.info_data["Selected countries"] = len(
-                [k for k, v in self.locations.items()
-                 if v == 2 and len(str(k)) == 3])
+        country_codes = self.get_country_codes()
+        self.info_data["Selected countries"] = len(country_codes)
         self.print_info()
 
     def _init_layout(self):
@@ -201,7 +196,7 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
 
         box = gui.widgetBox(self.mainArea, "Countries")
         self.country_tree = CountryTreeWidget(
-            self.mainArea, self.locations, commit_callback=self.commit_if)
+            self.mainArea, self.country_selection, commit_callback=self.commit_if)
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
 
@@ -229,10 +224,7 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
         types = len(self.include_data_types) if self.include_data_types else 2
         intervals = len(
             self.include_intervals) if self.include_intervals else 2
-        # pylint: disable=no-member
-        # Settings instance can have items member if it is defined as dict.
-        country_codes = [k for k, v in self.locations.items()
-                         if v == 2 and len(str(k)) == 3]
+        country_codes = self.get_country_codes()
         selected_countries = len(country_codes)
         if types * intervals * selected_countries > 100:
             self.info_data[
@@ -265,7 +257,7 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
 
         # pylint: disable=no-member
         # Settings instance can have items member if it is defined as dict.
-        country_codes = [k for k, v in self.locations.items()
+        country_codes = [k for k, v in self.country_selection.items()
                          if v == 2 and len(str(k)) == 3]
 
         logger.debug("Fetch: selected country codes: %s", country_codes)
