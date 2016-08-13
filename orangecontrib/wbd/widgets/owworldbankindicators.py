@@ -43,8 +43,10 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
     name = "WB Indicators"
     icon = "icons/wb_icon.png"
     outputs = [widget.OutputSignal(
-        "Data", table.Table,
-        doc="Attribute-valued data set read from the input file.")]
+        "Data",
+        table.Table,
+        doc="Indicator data from World bank Indicator API"
+    )]
 
     indicator_list_map = collections.OrderedDict([
         (0, "All"),
@@ -79,16 +81,6 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
         super().__init__()
         logger.debug("Initializing %s", self.__class__.__name__)
         self._api = api_wrapper.IndicatorAPI()
-        self.dataset_params = None
-        self._fetch_task = None
-        self._set_progress_flag = False
-        self._executor = concurrent.ThreadExecutor()
-        self.info_data = collections.OrderedDict([
-            ("Server status", None),
-            ("Indicators", None),
-            ("Rows", None),
-            ("Columns", None),
-        ])
 
         self._init_layout()
         self._check_server_status()
@@ -276,10 +268,10 @@ def main():  # pragma: no cover
     logging.basicConfig(level=logging.DEBUG)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtGui.QApplication(sys.argv)
-    orange_widget = OWWorldBankIndicators()
-    orange_widget.show()
+    indicators_widget = OWWorldBankIndicators()
+    indicators_widget.show()
     app.exec_()
-    orange_widget.saveSettings()
+    indicators_widget.saveSettings()
 
 
 if __name__ == "__main__":

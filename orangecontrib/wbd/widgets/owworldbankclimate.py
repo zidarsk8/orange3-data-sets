@@ -41,16 +41,11 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
     # and not shown in the menu.
     name = "WB Climate"
     icon = "icons/climate.png"
-    category = "Data Sets"
     outputs = [widget.OutputSignal(
-        "Data", table.Table,
-        doc="Attribute-valued data set read from the input file.")]
-
-    climate_list_map = collections.OrderedDict([
-        (0, "All"),
-        (1, "Common"),
-        (2, "Featured"),
-    ])
+        "Data",
+        table.Table,
+        doc="Climate data from World bank Climate API"
+    )]
 
     settingsList = [
         "auto_commit",
@@ -134,15 +129,6 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
         super().__init__()
         logger.debug("Initializing %s", self.__class__.__name__)
         self._api = api_wrapper.ClimateAPI()
-        self.dataset_params = None
-        self._fetch_task = None
-        self._set_progress_flag = False
-        self._executor = concurrent.ThreadExecutor()
-        self.info_data = collections.OrderedDict([
-            ("Server status", None),
-            ("Selected countries", None),
-            ("Warning", None),
-        ])
 
         self._init_layout()
         self.print_selection_count()
@@ -319,10 +305,10 @@ def main():  # pragma: no cover
     logging.basicConfig(level=logging.DEBUG)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtGui.QApplication(sys.argv)
-    orange_widget = OWWorldBankClimate()
-    orange_widget.show()
+    climate_widget = OWWorldBankClimate()
+    climate_widget.show()
     app.exec_()
-    orange_widget.saveSettings()
+    climate_widget.saveSettings()
 
 
 if __name__ == "__main__":
