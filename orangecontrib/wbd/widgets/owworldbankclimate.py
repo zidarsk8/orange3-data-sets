@@ -10,9 +10,9 @@ import math
 import signal
 import logging
 import collections
-import requests
 from functools import partial
 
+import requests
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
@@ -25,12 +25,17 @@ from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd import api_wrapper
 from orangecontrib.wbd import countries
 
-TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
 
 
 class OWWorldBankClimate(widget.OWWidget):
     """World bank data widget for Orange."""
+    # pylint: disable=invalid-name
+    # Some names have to be invalid to override parent fields.
+    # pylint: disable=too-many-ancestors
+    # False positive from fetching all ancestors from QWWidget.
+    # pylint: disable=too-many-instance-attributes
+    # False positive from fetching all attributes from QWWidget.
 
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
@@ -127,10 +132,10 @@ class OWWorldBankClimate(widget.OWWidget):
 
     def __init__(self):
         super().__init__()
-        logger.debug("Initializing {}".format(self.__class__.__name__))
+        logger.debug("Initializing %s", self.__class__.__name__)
         self._api = api_wrapper.ClimateAPI()
         self.dataset_params = None
-        self.datasetName = ""
+        self._fetch_task = None
         self.selection_changed = False
         self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
@@ -145,7 +150,10 @@ class OWWorldBankClimate(widget.OWWidget):
         self._check_server_status()
 
     def print_selection_count(self):
+        """Update info widget with new selection count."""
         self.info_data["Selected countries"] = 0
+        # pylint: disable=no-member
+        # Settings instance can have items member if it is defined as dict.
         if self.locations:
             self.info_data["Selected countries"] = len(
                 [k for k, v in self.locations.items()
@@ -197,16 +205,24 @@ class OWWorldBankClimate(widget.OWWidget):
             self.mainArea, self.locations, commit_callback=self.commit_if)
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
-        self._annotationsUpdating = False
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
+        """set widgets progress indicator.
+
+        Args:
+            value: integer indicating number of percent finished.
+        """
+        # pylint: disable=invalid-name
+        # the progressBarValue is defined in a super class and can not be
+        # changed here.
         logger.debug("Set progress: %s", value)
         self.progressBarValue = value
         if value == 100:
             self.progressBarFinished()
 
     def output_type_selected(self):
+        """Output type handle."""
         logger.debug("output type set to: %s", self.output_type)
         if self.output_type == 1:  # Time series
             self.ch_decade.setEnabled(False)
@@ -221,17 +237,19 @@ class OWWorldBankClimate(widget.OWWidget):
             self.ch_year.setEnabled(True)
         self.commit_if()
 
-    def _splitter_moved(self, *args):
+    def _splitter_moved(self, *_):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
     def _check_big_selection(self):
         types = len(self.include_data_types) if self.include_data_types else 2
         intervals = len(self.include_intervals) if self.include_intervals else 2
+        # pylint: disable=no-member
+        # Settings instance can have items member if it is defined as dict.
         country_codes = [k for k, v in self.locations.items()
                          if v == 2 and len(str(k)) == 3]
-        countries = len(country_codes)
-        if types * intervals * countries > 100:
+        selected_countries = len(country_codes)
+        if types * intervals * selected_countries > 100:
             self.info_data[
                 "Warning"] = "Fetching data\nmight take a few minutes."
         else:
@@ -239,6 +257,11 @@ class OWWorldBankClimate(widget.OWWidget):
         self.print_info()
 
     def commit_if(self):
+        """Auto commit handler.
+
+        This function must be called on every action that should trigger an
+        auto commit.
+        """
         logger.debug("Commit If - auto_commit: %s", self.auto_commit)
         self._check_big_selection()
         self.print_selection_count()
@@ -248,6 +271,7 @@ class OWWorldBankClimate(widget.OWWidget):
             self.selection_changed = True
 
     def commit(self):
+        """Fetch the climate data and send a new orange table."""
         logger.debug("commit data")
         self.setEnabled(False)
         self._set_progress_flag = True
@@ -273,6 +297,8 @@ class OWWorldBankClimate(widget.OWWidget):
         progress_task.exceptionReady.connect(self._dataset_progress_exception)
         self._executor.submit(progress_task)
 
+        # pylint: disable=no-member
+        # Settings instance can have items member if it is defined as dict.
         country_codes = [k for k, v in self.locations.items()
                          if v == 2 and len(str(k)) == 3]
 
@@ -332,6 +358,7 @@ class OWWorldBankClimate(widget.OWWidget):
         logger.exception(exception)
 
     def print_info(self):
+        """Refresh info in the info label."""
         lines = ["{}: {}".format(k, v) for k, v in self.info_data.items()
                  if v is not None]
         self._info_label.setText("\n".join(lines))
