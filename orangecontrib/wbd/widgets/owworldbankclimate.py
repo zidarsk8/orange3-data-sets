@@ -12,7 +12,6 @@ import logging
 import collections
 from functools import partial
 
-import requests
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
@@ -24,11 +23,12 @@ from Orange.widgets.utils import concurrent
 from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd import api_wrapper
 from orangecontrib.wbd import countries
+from orangecontrib.wbd import owwidget_base
 
 logger = logging.getLogger(__name__)
 
 
-class OWWorldBankClimate(widget.OWWidget):
+class OWWorldBankClimate(owwidget_base.OWWidgetBase):
     """World bank data widget for Orange."""
     # pylint: disable=invalid-name
     # Some names have to be invalid to override parent fields.
@@ -136,7 +136,6 @@ class OWWorldBankClimate(widget.OWWidget):
         self._api = api_wrapper.ClimateAPI()
         self.dataset_params = None
         self._fetch_task = None
-        self.selection_changed = False
         self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
         self.info_data = collections.OrderedDict([
@@ -186,8 +185,8 @@ class OWWorldBankClimate(widget.OWWidget):
                               ["Countries", "Time Series"], "Rows",
                               callback=self.output_type_selected)
 
-        gui.checkBox(output_box, self, "use_country_names", "Use Country names",
-                     callback=self.commit_if)
+        gui.checkBox(output_box, self, "use_country_names",
+                     "Use Country names", callback=self.commit_if)
 
         self.output_type = 0
 
@@ -205,21 +204,6 @@ class OWWorldBankClimate(widget.OWWidget):
             self.mainArea, self.locations, commit_callback=self.commit_if)
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
-
-    @QtCore.pyqtSlot(float)
-    def set_progress(self, value):
-        """set widgets progress indicator.
-
-        Args:
-            value: integer indicating number of percent finished.
-        """
-        # pylint: disable=invalid-name
-        # the progressBarValue is defined in a super class and can not be
-        # changed here.
-        logger.debug("Set progress: %s", value)
-        self.progressBarValue = value
-        if value == 100:
-            self.progressBarFinished()
 
     def output_type_selected(self):
         """Output type handle."""
@@ -243,7 +227,8 @@ class OWWorldBankClimate(widget.OWWidget):
 
     def _check_big_selection(self):
         types = len(self.include_data_types) if self.include_data_types else 2
-        intervals = len(self.include_intervals) if self.include_intervals else 2
+        intervals = len(
+            self.include_intervals) if self.include_intervals else 2
         # pylint: disable=no-member
         # Settings instance can have items member if it is defined as dict.
         country_codes = [k for k, v in self.locations.items()
@@ -262,28 +247,9 @@ class OWWorldBankClimate(widget.OWWidget):
         This function must be called on every action that should trigger an
         auto commit.
         """
-        logger.debug("Commit If - auto_commit: %s", self.auto_commit)
         self._check_big_selection()
         self.print_selection_count()
-        if self.auto_commit:
-            self.commit()
-        else:
-            self.selection_changed = True
-
-    def commit(self):
-        """Fetch the climate data and send a new orange table."""
-        logger.debug("commit data")
-        self.setEnabled(False)
-        self._set_progress_flag = True
-
-        func = partial(
-            self._fetch_dataset,
-            concurrent.methodinvoke(self, "set_progress", (float,))
-        )
-        self._fetch_task = concurrent.Task(function=func)
-        self._fetch_task.finished.connect(self._fetch_dataset_finished)
-        self._fetch_task.exceptionReady.connect(self._fetch_dataset_exception)
-        self._executor.submit(self._fetch_task)
+        super().commit_if()
 
     def _fetch_dataset(self, set_progress=None):
 
@@ -329,14 +295,6 @@ class OWWorldBankClimate(widget.OWWidget):
 
         self.print_info()
         self.send("Data", data_table)
-
-    def _check_server_status(self):
-        try:
-            requests.get('http://api.worldbank.org', timeout=1)
-            self.info_data["Server status"] = "Up"
-        except requests.exceptions.Timeout:
-            self.info_data["Server status"] = "Down"
-        self.print_info()
 
     @staticmethod
     def _fetch_dataset_exception(exception):

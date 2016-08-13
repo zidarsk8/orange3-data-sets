@@ -12,7 +12,6 @@ import logging
 import collections
 from functools import partial
 
-import requests
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
@@ -25,11 +24,12 @@ from orangecontrib.wbd.countries_and_regions import CountryTreeWidget
 from orangecontrib.wbd.indicators_list import IndicatorsTreeView
 from orangecontrib.wbd import api_wrapper
 from orangecontrib.wbd import countries
+from orangecontrib.wbd import owwidget_base
 
 logger = logging.getLogger(__name__)
 
 
-class OWWorldBankIndicators(widget.OWWidget):
+class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
     """World bank data widget for Orange."""
     # pylint: disable=invalid-name
     # Some names have to be invalid to override parent fields.
@@ -42,7 +42,6 @@ class OWWorldBankIndicators(widget.OWWidget):
     # and not shown in the menu.
     name = "WB Indicators"
     icon = "icons/wb_icon.png"
-    category = "Data Sets"
     outputs = [widget.OutputSignal(
         "Data", table.Table,
         doc="Attribute-valued data set read from the input file.")]
@@ -82,7 +81,6 @@ class OWWorldBankIndicators(widget.OWWidget):
         self._api = api_wrapper.IndicatorAPI()
         self.dataset_params = None
         self._fetch_task = None
-        self.selection_changed = False
         self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
         self.info_data = collections.OrderedDict([
@@ -166,29 +164,6 @@ class OWWorldBankIndicators(widget.OWWidget):
 
         self.progressBarInit()
 
-    def _check_server_status(self):
-        try:
-            requests.get('http://api.worldbank.org', timeout=1)
-            self.info_data["Server status"] = "Up"
-        except requests.exceptions.Timeout:
-            self.info_data["Server status"] = "Down"
-        self.print_info()
-
-    @QtCore.pyqtSlot(float)
-    def set_progress(self, value):
-        """set widgets progress indicator.
-
-        Args:
-            value: integer indicating number of percent finished.
-        """
-        # pylint: disable=invalid-name
-        # the progressBarValue is defined in a super class and can not be
-        # changed here.
-        logger.debug("Set progress: %s", value)
-        self.progressBarValue = value
-        if value == 100:
-            self.progressBarFinished()
-
     def filter_indicator_list(self):
         """Set the proxy model filter and update info box."""
         filter_string = self.filter_text.text()
@@ -217,33 +192,6 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
-    def commit_if(self):
-        """Auto commit handler.
-
-        This function must be called on every action that should trigger an
-        auto commit.
-        """
-        logger.debug("Commit If - auto_commit: %s", self.auto_commit)
-        if self.auto_commit:
-            self.commit()
-        else:
-            self.selection_changed = True
-
-    def commit(self):
-        """Fetch the indicator data and send a new orange table."""
-        logger.debug("commit data")
-        self.setEnabled(False)
-        self._set_progress_flag = True
-
-        func = partial(
-            self._fetch_dataset,
-            concurrent.methodinvoke(self, "set_progress", (float,))
-        )
-        self._fetch_task = concurrent.Task(function=func)
-        self._fetch_task.finished.connect(self._fetch_dataset_finished)
-        self._fetch_task.exceptionReady.connect(self._fetch_dataset_exception)
-        self._executor.submit(self._fetch_task)
-
     def _fetch_dataset(self, set_progress=None):
 
         set_progress(0)
@@ -256,16 +204,13 @@ class OWWorldBankIndicators(widget.OWWidget):
         progress_task.exceptionReady.connect(self._dataset_progress_exception)
         self._executor.submit(progress_task)
 
-        # pylint: disable=no-member
-        # Settings instance can have items member if it is defined as dict.
-        country_codes = [
-            k for k, v in self.country_selection.items()
-            if v == 2 and len(str(k)) == 3
-        ]
+        country_codes = self.get_country_codes()
+
         if len(country_codes) > 250:
             country_codes = None
         logger.debug("Fetch: selected country codes: %s", country_codes)
-        logger.debug("Fetch: selected indicators: %s", self.indicator_selection)
+        logger.debug("Fetch: selected indicators: %s",
+                     self.indicator_selection)
         indicator_dataset = self._api.get_dataset(self.indicator_selection,
                                                   countries=country_codes)
         self._set_progress_flag = False
