@@ -10,9 +10,9 @@ import math
 import signal
 import logging
 import collections
-import requests
 from functools import partial
 
+import requests
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from Orange.data import table
@@ -26,12 +26,17 @@ from orangecontrib.wbd.indicators_list import IndicatorsTreeView
 from orangecontrib.wbd import api_wrapper
 from orangecontrib.wbd import countries
 
-TextFilterRole = next(gui.OrangeUserRole)
 logger = logging.getLogger(__name__)
 
 
 class OWWorldBankIndicators(widget.OWWidget):
     """World bank data widget for Orange."""
+    # pylint: disable=invalid-name
+    # Some names have to be invalid to override parent fields.
+    # pylint: disable=too-many-ancestors
+    # False positive from fetching all ancestors from QWWidget.
+    # pylint: disable=too-many-instance-attributes
+    # False positive from fetching all attributes from QWWidget.
 
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
@@ -50,13 +55,11 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     settingsList = [
         "indicator_list_selection",
-        "mergeSpots",
         "country_selection",
         "indicator_selection",
         "splitterSettings",
         "currentGds",
         "auto_commit",
-        "datasetNames",
         "output_type",
     ]
 
@@ -64,8 +67,6 @@ class OWWorldBankIndicators(widget.OWWidget):
     indicator_selection = Setting([])
     indicator_list_selection = Setting(True)
     output_type = Setting(True)
-    mergeSpots = Setting(True)
-    datasetNames = Setting({})
     auto_commit = Setting(False)
 
     splitterSettings = Setting((
@@ -77,10 +78,10 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     def __init__(self):
         super().__init__()
-        logger.debug("Initializing {}".format(self.__class__.__name__))
+        logger.debug("Initializing %s", self.__class__.__name__)
         self._api = api_wrapper.IndicatorAPI()
         self.dataset_params = None
-        self.datasetName = ""
+        self._fetch_task = None
         self.selection_changed = False
         self._set_progress_flag = False
         self._executor = concurrent.ThreadExecutor()
@@ -134,33 +135,32 @@ class OWWorldBankIndicators(widget.OWWidget):
         self.completer.setModel(QtGui.QStringListModel(self))
         self.filter_text.setCompleter(self.completer)
 
-        splitter = QtGui.QSplitter(QtCore.Qt.Vertical, self.mainArea)
+        spliter_v = QtGui.QSplitter(QtCore.Qt.Vertical, self.mainArea)
 
         self.mainArea.layout().addWidget(self.filter_text)
-        self.mainArea.layout().addWidget(splitter)
+        self.mainArea.layout().addWidget(spliter_v)
 
-        self.indicator_widget = IndicatorsTreeView(splitter, main_widget=self)
+        self.indicator_widget = IndicatorsTreeView(spliter_v, main_widget=self)
 
-        splitterH = QtGui.QSplitter(QtCore.Qt.Horizontal, splitter)
+        splitter_h = QtGui.QSplitter(QtCore.Qt.Horizontal, spliter_v)
 
-        self.description_box = gui.widgetBox(splitterH, "Description")
+        self.description_box = gui.widgetBox(splitter_h, "Description")
 
         self.indicator_description = QtGui.QTextEdit()
         self.indicator_description.setReadOnly(True)
         self.description_box.layout().addWidget(self.indicator_description)
 
-        box = gui.widgetBox(splitterH, "Countries and Regions")
+        box = gui.widgetBox(splitter_h, "Countries and Regions")
         self.country_tree = CountryTreeWidget(
-            splitterH, self.country_selection)
+            splitter_h, self.country_selection)
         box.layout().addWidget(self.country_tree)
         self.country_tree.set_data(countries.get_countries_regions_dict())
-        self._annotationsUpdating = False
 
-        self.splitters = splitter, splitterH
+        self.splitters = spliter_v, splitter_h
 
-        for sp, setting in zip(self.splitters, self.splitterSettings):
-            sp.splitterMoved.connect(self._splitter_moved)
-            sp.restoreState(setting)
+        for splitter, setting in zip(self.splitters, self.splitterSettings):
+            splitter.splitterMoved.connect(self._splitter_moved)
+            splitter.restoreState(setting)
 
         # self.resize(2000, 600)  # why does this not work
 
@@ -176,12 +176,21 @@ class OWWorldBankIndicators(widget.OWWidget):
 
     @QtCore.pyqtSlot(float)
     def set_progress(self, value):
+        """set widgets progress indicator.
+
+        Args:
+            value: integer indicating number of percent finished.
+        """
+        # pylint: disable=invalid-name
+        # the progressBarValue is defined in a super class and can not be
+        # changed here.
         logger.debug("Set progress: %s", value)
         self.progressBarValue = value
         if value == 100:
             self.progressBarFinished()
 
     def filter_indicator_list(self):
+        """Set the proxy model filter and update info box."""
         filter_string = self.filter_text.text()
         proxy_model = self.indicator_widget.model()
         if proxy_model:
@@ -190,21 +199,30 @@ class OWWorldBankIndicators(widget.OWWidget):
             self.print_info()
 
     def output_type_selected(self):
-        pass
+        self.commit_if()
 
     def basic_indicator_filter(self):
         return self.indicator_list_map.get(self.indicator_list_selection)
 
     def indicator_list_selected(self):
+        """Update basic indicator selection.
+
+        Switch indicator list selection between All, Common, and Featured.
+        """
         value = self.basic_indicator_filter()
         logger.debug("Indicator list selected: %s", value)
         self.indicator_widget.fetch_indicators()
 
-    def _splitter_moved(self, *args):
+    def _splitter_moved(self, *_):
         self.splitterSettings = [bytes(sp.saveState())
                                  for sp in self.splitters]
 
     def commit_if(self):
+        """Auto commit handler.
+
+        This function must be called on every action that should trigger an
+        auto commit.
+        """
         logger.debug("Commit If - auto_commit: %s", self.auto_commit)
         if self.auto_commit:
             self.commit()
@@ -212,6 +230,7 @@ class OWWorldBankIndicators(widget.OWWidget):
             self.selection_changed = True
 
     def commit(self):
+        """Fetch the indicator data and send a new orange table."""
         logger.debug("commit data")
         self.setEnabled(False)
         self._set_progress_flag = True
@@ -234,12 +253,15 @@ class OWWorldBankIndicators(widget.OWWidget):
             concurrent.methodinvoke(self, "set_progress", (float,))
         )
         progress_task = concurrent.Task(function=func)
-        progress_task.finished.connect(self._dataset_progress_finished)
         progress_task.exceptionReady.connect(self._dataset_progress_exception)
         self._executor.submit(progress_task)
 
-        country_codes = [k for k, v in self.country_selection.items()
-                         if v == 2 and len(str(k)) == 3]
+        # pylint: disable=no-member
+        # Settings instance can have items member if it is defined as dict.
+        country_codes = [
+            k for k, v in self.country_selection.items()
+            if v == 2 and len(str(k)) == 3
+        ]
         if len(country_codes) > 250:
             country_codes = None
         logger.debug("Fetch: selected country codes: %s", country_codes)
@@ -271,6 +293,13 @@ class OWWorldBankIndicators(widget.OWWidget):
         logger.exception(exception)
 
     def _dataset_progress(self, set_progress=None):
+        """Update dataset download progress.
+
+        This function reads the progress state from the world bank API and sets
+        the current widgets progress to that. All This thread should only read
+        data and ask the GUI thread to update the progress for this to be
+        thread safe.
+        """
         while self._set_progress_flag:
             indicators = self._api.progress["indicators"]
             current_indicator = self._api.progress["current_indicator"]
@@ -286,13 +315,12 @@ class OWWorldBankIndicators(widget.OWWidget):
                 set_progress(math.floor(progress))
             time.sleep(1)
 
-    def _dataset_progress_finished(self):
-        pass
-
     def _dataset_progress_exception(self, exception):
         logger.exception(exception)
+        self.print_info()
 
     def print_info(self):
+        """Refresh info in the info label."""
         lines = ["{}: {}".format(k, v) for k, v in self.info_data.items()
                  if v is not None]
         self._info_label.setText("\n".join(lines))
