@@ -71,6 +71,10 @@ if __name__ == '__main__':
                 'sphinx',
                 'sphinx_rtd_theme',
             ],
+            'test': [
+                'nose',
+                'nose-cov',
+            ]
         },
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
