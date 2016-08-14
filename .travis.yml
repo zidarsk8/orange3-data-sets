@@ -41,7 +41,9 @@ install:
     - cat requirements.txt | xargs -n 1 -L 1 pip install -U
     - pip install codecov
 
-script: nosetests --with-coverage --cover-package=orangecontrib 
+script: 
+    - python setup.py test
+    - pylint orangecontrib
 
 after_success:
     - codecov
