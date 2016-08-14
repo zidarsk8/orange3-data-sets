@@ -1,9 +1,9 @@
 Orange3 Example Add-on
 ======================
 
-[![Build Status](https://travis-ci.org/zidarsk8/world_bank_data.svg?branch=master)](https://travis-ci.org/zidarsk8/world_bank_data/builds)
-[![codecov.io](https://codecov.io/github/zidarsk8/world_bank_data/coverage.svg?branch=master)](https://codecov.io/github/zidarsk8/world_bank_data?branch=master)
-[![Code Climate](https://codeclimate.com/github/zidarsk8/world_bank_data/badges/gpa.svg)](https://codeclimate.com/github/zidarsk8/world_bank_data)
+[![Build Status](https://travis-ci.org/zidarsk8/orange3-data-sets.svg?branch=master)](https://travis-ci.org/zidarsk8/orange3-data-sets/builds)
+[![codecov.io](https://codecov.io/github/zidarsk8/orange3-data-sets/coverage.svg?branch=master)](https://codecov.io/github/zidarsk8/orange3-data-sets?branch=master)
+[![Code Climate](https://codeclimate.com/github/zidarsk8/orange3-data-sets/badges/gpa.svg)](https://codeclimate.com/github/zidarsk8/orange3-data-sets)
 [![Dependency Status](https://www.versioneye.com/user/projects/5739ad4fa0ca35005084183e/badge.svg?style=flat)](https://www.versioneye.com/user/projects/5739ad4fa0ca35005084183e)
 
 This is an example add-on for [Orange3](http://orange.biolab.si). Add-on can extend Orange either 

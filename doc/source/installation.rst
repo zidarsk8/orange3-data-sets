@@ -26,7 +26,7 @@ Installing from tarball
 
 .. code-block:: bash
 
-   pip install https://github.com/zidarsk8/world_bank_data/tarball/0.2.0
+   pip install https://github.com/zidarsk8/orange3-data-sets/tarball/0.2.0
 
 Installing from source
 ======================
@@ -38,8 +38,8 @@ sure you have git_ installed on your system.
 
 .. code-block:: bash
 
-   git clone https://github.com/zidarsk8/world_bank_data.git
-   cd world_bank_data
+   git clone https://github.com/zidarsk8/orange3-data-sets.git
+   cd orange3-data-sets
    
    pip install -e .
 
