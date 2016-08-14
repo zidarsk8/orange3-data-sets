@@ -44,7 +44,7 @@ install:
 
 script: 
     - python setup.py test
-    - pylint orangecontrib
+    # - pylint orangecontrib  # False positives for Qt members
 
 after_success:
     - codecov
