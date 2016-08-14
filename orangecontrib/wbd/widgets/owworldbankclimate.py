@@ -123,9 +123,7 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
 
     def __init__(self):
         super().__init__()
-        logger.debug("Initializing %s", self.__class__.__name__)
         self._api = api_wrapper.ClimateAPI()
-
         self._init_layout()
         self.print_selection_count()
         self._check_server_status()
