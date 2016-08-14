@@ -91,7 +91,8 @@ class OWWidgetBase(widget.OWWidget):
         self._executor.submit(self._fetch_task)
 
     def _fetch_dataset(self, set_progress=None):
-        pass
+        raise NotImplementedError(
+            "Missing implementation for _fetch_dataset.")
 
     def _dataset_to_table(self, dataset):
         raise NotImplementedError(
