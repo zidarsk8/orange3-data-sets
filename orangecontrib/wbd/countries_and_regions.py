@@ -21,8 +21,14 @@ class CountryTreeWidget(QtGui.QTreeWidget):
         https://datahelpdesk.worldbank.org/knowledgebase/articles/906519
     """
 
-    def __init__(self, parent, selection_list, commit_callback=None):
+    def __init__(self, parent, selection_list, commit_callback=None,
+                 default_colapse=False, default_select=False):
         super().__init__(parent)
+        if default_select:
+            self._default_select = QtCore.Qt.Checked
+        else:
+            self._default_select = QtCore.Qt.Unchecked
+        self._default_colapse = default_colapse
         self._commit_callback = commit_callback
         self._selection_list = selection_list
         self._busy = False
@@ -67,19 +73,22 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             parent = self
 
         tristate = QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsTristate
+        twostate = QtCore.Qt.ItemIsUserCheckable
         defaults = self._selection_list
         for key, value in data.items():
             name = countries.RENAME_MAP.get(key, value.get("name", key))
             display_key = "" if name == key else key
 
             item = QtGui.QTreeWidgetItem(parent, [name, display_key])
-            item.setFlags(item.flags() | tristate)
             item.key = value if isinstance(value, str) else key
 
-            defaults[item.key] = defaults.get(item.key, QtCore.Qt.Checked)
+            defaults[item.key] = defaults.get(item.key, self._default_select)
             item.setCheckState(0, defaults[item.key])
             if isinstance(value, collections.OrderedDict):
+                item.setFlags(item.flags() | tristate)
                 self._fill_values(value, item)
+            else:
+                item.setFlags(item.flags() | twostate)
 
     def _collapse_items(self, root=None):
         """Collapse items that were marked as collapsed in previous sessions.
@@ -96,7 +105,7 @@ class CountryTreeWidget(QtGui.QTreeWidget):
             item = root.child(i)
             if not item.childCount():
                 continue
-            if self._selection_list.get(("collapsed", item.key)):
+            if self._selection_list.get(("collapsed", item.key), self._default_colapse):
                 item.setExpanded(False)
             self._collapse_items(item)
 
