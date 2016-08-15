@@ -33,14 +33,14 @@ KEYWORDS = [
 
 
 def get_description():
-    with open("README.md") as f:
+    with open("README.rst") as f:
         return f.read()
 
 
 if __name__ == '__main__':
     setup(
         name="Orange3-Datasets",
-        version="0.1.0",
+        version="0.1.1",
         license="MIT",
         author="Miha Zidar",
         author_email="zidarsk8@gmail.com",
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         long_description=get_description(),
         url="https://github.com/zidarsk8/orange3-datasets",
         download_url=("https://github.com/zidarsk8/orange3-datasets/tarball/"
-                      "0.1.0"),
+                      "0.1.1"),
         packages=[
             'orangecontrib',
             'orangecontrib.wbd',
