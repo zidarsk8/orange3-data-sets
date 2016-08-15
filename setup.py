@@ -64,7 +64,7 @@ if __name__ == '__main__':
             'Orange3',
             'numpy',
             'observable',
-            'simple_wbd>=0.4.1',
+            'simple_wbd>=0.5.1',
         ],
         extras_require={
             'doc': [
