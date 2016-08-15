@@ -181,6 +181,7 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
         )
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)
+        self.resize(500, 400)  # why does this not work
 
     def output_type_selected(self):
         """Output type handle."""
