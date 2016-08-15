@@ -175,7 +175,9 @@ class OWWorldBankClimate(owwidget_base.OWWidgetBase):
         self.country_tree = CountryTreeWidget(
             self.mainArea,
             self.country_selection,
-            commit_callback=self.commit_if
+            commit_callback=self.commit_if,
+            default_colapse=True,
+            default_select=False,
         )
         self.country_tree.set_data(countries.get_countries_dict())
         box.layout().addWidget(self.country_tree)

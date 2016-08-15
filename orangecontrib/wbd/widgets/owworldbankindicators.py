@@ -137,7 +137,11 @@ class OWWorldBankIndicators(owwidget_base.OWWidgetBase):
 
         box = gui.widgetBox(splitter_h, "Countries and Regions")
         self.country_tree = CountryTreeWidget(
-            splitter_h, self.country_selection)
+            splitter_h,
+            self.country_selection,
+            default_select=True,
+            default_colapse=True,
+        )
         box.layout().addWidget(self.country_tree)
         self.country_tree.set_data(countries.get_countries_regions_dict())
 
