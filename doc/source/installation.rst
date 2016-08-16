@@ -1,32 +1,27 @@
 Installation
 ************
 
-Virtualenv
-==========
-
-This is an optional step, but it is recommended that you install and use python
-libraries in separate virtual environments. For more info see virtualenv_.
-
-.. _virtualenv: https://virtualenv.pypa.io/en/stable/
-
-.. code-block:: bash
-
-    virtualenv --python=python3 --system-site-packages ~/venv3
-    source ~/venv3/bin/activate
-
 Requirements
 ============
 
-Orange3_
+Before installing this package, make sure to install Orange3_.
 
 .. _Orange3: https://github.com/biolab/orange3/
 
-Installing from tarball
-=========
+
+With pip
+========
 
 .. code-block:: bash
 
-   pip install https://github.com/zidarsk8/orange3-data-sets/tarball/0.2.0
+   pip install orange3-datasets
+
+With gui
+========
+
+You can install this plugin by going to Options > Add-ons... and selecting 
+Orange3-DataSets
+
 
 Installing from source
 ======================
@@ -46,5 +41,3 @@ sure you have git_ installed on your system.
    # for running tests, linters and generating docs you can also run
 
    pip install -r requirements.txt
-
-
