@@ -78,12 +78,42 @@ class IndicatorDataset(simple_wbd.IndicatorDataset):
             return None
 
         meta_columns = data[1:, :7]
+
         data_columns = data[1:, 7:]
 
-        meta_domains = [Orange.data.StringVariable(name)
-                        for name in data[0, :7]]
+        regions = {r:i for i,r in enumerate(sorted(set(meta_columns[:,1])))}
+        admin_regions = {r:i for i,r in enumerate(sorted(set(meta_columns[:,2])))}
+        income_level = {r:i for i,r in enumerate(sorted(set(meta_columns[:,3])))}
+        lending_type = {r:i for i,r in enumerate(sorted(set(meta_columns[:,6])))}
+
+        meta_domains = [
+          Orange.data.StringVariable("Country"),
+          Orange.data.DiscreteVariable(
+            "Region",
+            values=sorted(regions.keys())
+          ),
+          Orange.data.DiscreteVariable(
+            "Admin region",
+            values=sorted(admin_regions.keys())
+          ),
+          Orange.data.DiscreteVariable(
+            "Income level",
+            values=sorted(income_level.keys())
+          ),
+          Orange.data.ContinuousVariable("Longitude"),
+          Orange.data.ContinuousVariable("Latitude"),
+          Orange.data.DiscreteVariable(
+            "Lending type",
+            values=sorted(lending_type.keys())
+          ),
+        ]
         colum_domains = [Orange.data.ContinuousVariable(column_name)
                          for column_name in data[0, 7:]]
+        for row in meta_columns:
+          row[1] = regions[row[1]]
+          row[2] = admin_regions[row[2]]
+          row[3] = income_level[row[3]]
+          row[6] = lending_type[row[6]]
 
         logger.debug("Generated Orange table of size: %s", data.shape)
 
